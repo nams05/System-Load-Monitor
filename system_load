@@ -1,42 +1,25 @@
 #!/bin/bash
 
+current=$(dirname $0)
 Date=$(date +%d_%m_%y)
-[ -f $Date.txt ] || touch $Date.txt
+[ -f $current/$Date.txt ] || touch $current/$Date.txt
 
 #name="Report"
 #touch $name:$Date 
-top -b -n1 > top.txt
+top -b -n1 > $current/top.txt
 
 Time=$(date +%H)
-echo -n "$Time " >> $Date.txt
+echo -n "$Time " >> $current/$Date.txt
 
-flag=0
-while read line; do
-    for word in $line; do
-    	if [ $flag == 1 ]; then
-    		echo -n "$word " >> $Date.txt
-    		flag=0
-    	fi
-    	if [ $flag == 2 ]; then
-    		echo $word  >> $Date.txt
-    		flag=3
-    		break
-    	fi
-        if [ $word == "%Cpu(s):" ]; then
-        	flag=1
-        fi
-        if [ $word == "free," ]; then
-        	flag=2
-        fi
-    done
-    if [ $flag == 3 ]; then
-    	break
-    fi
-done <  top.txt
+Cpu=$(grep "%Cpu(s)" $current/top.txt | awk '{print $(2)}') 
+echo -n "$Cpu " >> $current/$Date.txt
+grep "KiB Mem" $current/top.txt | awk '{print $(NF-3)}' >> $current/$Date.txt
 
-rm top.txt
+rm $current/top.txt
+
 if [ $Time == 23 ]; then
-	python system_load_graph.py $Date.txt
+	python $current/send_report.py $current/$Date.txt
 fi
 
+echo "script executed successfully"
 
