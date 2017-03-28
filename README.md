@@ -2,11 +2,11 @@
 The script monitors you system's load every hour and the data is recorded in a file. A new file is created everyday. At the end of the day the file is read and a graph is generated. The data along with the graph is then sent via mail. 
 
 # How to run the script
-* Change the file permissions of the file to execute it
+* Change the file permission to make it executable
 ```
 chmod 755 system_load
 ```
-* Edit the crontab
+* Edit the cron file
 ``` 
 crontab -e
 ```
