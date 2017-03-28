@@ -10,4 +10,4 @@ chmod 755 system_load
 ``` 
 crontab -e
 ```
-*** And voila!!! The script will run every hour and send an automated mail at 2300hr. 
+**And voila!!! The script will run every hour and send an automated mail at 2300hr.** 
