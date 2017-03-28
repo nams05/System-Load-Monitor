@@ -4,7 +4,7 @@ The script monitors you system's load every hour and the data is recorded in a f
 # How to run the script
 * Change the file permission to make it executable
 ```
-chmod 755 system_load
+chmod +x system_load
 ```
 * Edit the cron file
 ``` 
