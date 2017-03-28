@@ -21,4 +21,4 @@
 #
 # m h  dom mon dow   command
 #The following command will run the script at 0 mins every hour of every day.
-0 */1 * * * python /home/execute/this/script/send_report.py 
+0 */1 * * *  /home/execute/this/script/system_load 
