@@ -1,8 +1,8 @@
 #!/bin/bash
 
-current=$(dirname $0)
+current=$(dirname $0) #store the absolute path to the current directory
 Date=$(date +%d_%m_%y)
-[ -f $current/$Date.txt ] || touch $current/$Date.txt
+[ -f $current/$Date.txt ] || touch $current/$Date.txt # make file if not present 
 
 hour_temp=$(date +%H)
 hours=${hour_temp#0}
@@ -10,13 +10,13 @@ min_temp=$(date +%M)
 mins=${min_temp#0}
 sec_temp=$(date +%S)
 secs=${sec_temp#0}
-until [[ $hours -eq "23" ]] && [[ $mins -eq "20" ]] && [[ $secs -eq "00" ]]
+until [[ $hours -eq "23" ]] && [[ $mins -eq "59" ]] && [[ $secs -eq "59" ]] #run till the last sec of the day
 do
 	Time=$(date +%H_%M_%S)
 	hour_temp=$(date +%H)
-	hours=${hour_temp#0}
+	hours=${hour_temp#0}    #strip tailing 0
 	min_temp=$(date +%M)
-	mins=${min_temp#0}
+	mins=${min_temp#0}	
 	sec_temp=$(date +%S)
 	secs=${sec_temp#0}
 	total_secs=$(( (hours*60 + mins)*60 + secs ))
@@ -27,7 +27,9 @@ do
 	echo "$hours $mins $sec "
 done
 
-python $current/send_report.py $current/$Date.txt
+python $current/send_report.py $current/$Date.txt  
+
+sleep 1
 
 $current/system_load
 
