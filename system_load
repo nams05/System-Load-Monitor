@@ -4,22 +4,34 @@ current=$(dirname $0)
 Date=$(date +%d_%m_%y)
 [ -f $current/$Date.txt ] || touch $current/$Date.txt
 
-#name="Report"
-#touch $name:$Date 
-top -b -n1 > $current/top.txt
+hour_temp=$(date +%H)
+hours=${hour_temp#0}
+min_temp=$(date +%M)
+mins=${min_temp#0}
+sec_temp=$(date +%S)
+secs=${sec_temp#0}
+until [[ $hours -eq "23" ]] && [[ $mins -eq "20" ]] && [[ $secs -eq "00" ]]
+do
+	Time=$(date +%H_%M_%S)
+	hour_temp=$(date +%H)
+	hours=${hour_temp#0}
+	min_temp=$(date +%M)
+	mins=${min_temp#0}
+	sec_temp=$(date +%S)
+	secs=${sec_temp#0}
+	total_secs=$(( (hours*60 + mins)*60 + secs ))
+	echo -n "$total_secs " >> $current/$Date.txt
+	Cpu=$(mpstat 1 1| grep -A 5 "%idle" | tail -n 1 | awk -F " " '{print 100 -  $12}') 
+	echo -n "$Cpu " >> $current/$Date.txt
+	vmstat -s | grep "used memory" | awk '{print $1}' >> $current/$Date.txt
+	echo "$hours $mins $sec "
+done
 
-Time=$(date +%H)
-echo -n "$Time " >> $current/$Date.txt
+python $current/send_report.py $current/$Date.txt
 
-Cpu=$(grep "%Cpu(s)" $current/top.txt | awk '{print $(2)}') 
-echo -n "$Cpu " >> $current/$Date.txt
-grep "KiB Mem" $current/top.txt | awk '{print $(NF-3)}' >> $current/$Date.txt
-
-rm $current/top.txt
-
-if [ $Time == 23 ]; then
-	python $current/send_report.py $current/$Date.txt
-fi
+$current/system_load
 
 echo "script executed successfully"
+
+
 
