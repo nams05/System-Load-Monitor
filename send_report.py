@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import Tkinter
 import datetime
 import dotenv #to use .env file
+import array
 import render_html
 
 dotenv.load()
@@ -32,41 +33,79 @@ with open(sys.argv[1]) as f:
 		elif (i%3==2):
 			ram=((float(word))/total_memory)*100.
 			ram_usage.append(ram)
-		i=i+1	
+		i=i+1
+hr=[]	
+for i in time:
+	hr.append(i/3600)
+
+cpu_usage_avg=array.array('f',(0,)*24)
+ram_usage_avg=array.array('f',(0,)*24)
+count=array.array('i',(0,)*24)
+
+cpu_usage_avg[hr[0]]+=cpu_usage[0]
+ram_usage_avg[hr[0]]+=ram_usage[0]
+count[hr[0]]+=1
+for i in range(1,len(hr)):
+		cpu_usage_avg[hr[i]]+=cpu_usage[i]
+		ram_usage_avg[hr[i]]+=ram_usage[i]
+		count[hr[i]]+=1	
+for i in range(0,24):
+	if (count[i]==0):
+		continue
+	cpu_usage_avg[i]=cpu_usage_avg[i]/count[i]
+	ram_usage_avg[i]=ram_usage_avg[i]/count[i]
+	render_html.html+="<tr style=\"background-color:"+render_html.color(ram_usage_avg)+"\"><td>"+str(i)+"</td><td>"+str(cpu_usage_avg[i])+"</td><td>"+str(ram_usage_avg[i])+"</td></tr>"
+
+render_html.html+="</table><br><br><img src=\"cid:image1\"></body></html>"
+
 
 #plotting the graph using the 3 lists
 plt.close('all')
-cpu=plt.plot(time,cpu_usage,'r--',label='CPU Usage(%)') # plotting time,cpu_usage separately 
-ram=plt.plot(time,ram_usage,'g--',label='RAM Usage(%)') # plotting time,ram_usage separately
-plt.xticks(np.arange(0, 24 , 2))
+fig_size = plt.rcParams["figure.figsize"] #set the size of the generated graph 
+# Set figure width to 20 and height to 10
+fig_size[0] = 20
+fig_size[1] = 10
+plt.rcParams["figure.figsize"] = fig_size
+cpu=plt.plot(time,cpu_usage,'r',label='CPU Usage(%)') # plotting time,cpu_usage separately 
+ram=plt.plot(time,ram_usage,'g',label='RAM Usage(%)') # plotting time,ram_usage separately
+# Get current size
+
+ 
+# plt.xticks(np.arange(0, 24 , 2))
 plt.yticks(np.arange(0, 110 , 10))
-plt.setp(cpu,color='r', linewidth=3.0)
-plt.setp(ram, color='g', linewidth=3.0)
+plt.setp(cpu,color='r', linewidth=1.0)
+plt.setp(ram, color='g', linewidth=1.0)
 plt.legend(loc='upper right')
-plt.xlabel('time (hours)')
+plt.xlabel('time (secs)')
 plt.ylabel('load(%)')
-plt.axis([0, 23,0,100],facecolor='b')
+# plt.axis([0, 23,0,100],facecolor='b')
 plt.grid(True)
-plt.savefig(date+'_graph.png')
+plt.savefig(date+'_graph.jpg')
 
 # compose the email
 fromaddr = "namrata.gupta05@gmail.com"
 toaddr = "hemant6488@gmail.com"
-cc="namrata.gupta05@gmail.com"
+cc="chipndale134@gmail.com"
 bcc="namrata.gupta05@gmail.com"
-rcpt=[bcc] +[cc] + [toaddr]
-img_data = open(date+'_graph.png', 'rb').read()
+rcpt=[cc]  + [bcc]+ [toaddr]
+img_data = open(date+'_graph.jpg', 'rb').read()
 msg = MIMEMultipart()
 msg['From'] = fromaddr
 msg['To'] = toaddr
 msg['Bcc'] = bcc 
+msg['Cc'] = cc
 msg['Subject'] = "Report : " + date
+msg.preamble = "System Load Report"
+
 html_body=render_html.html
 
 html_part=MIMEText(html_body,'html')
 msg.attach(html_part)
-# image = MIMEImage(img_data, name=os.path.basename(date+'_graph.png'))
-# msg.attach(image)
+
+
+image = MIMEImage(img_data, name=os.path.basename(date+'_graph.jpg'))
+image.add_header('Content-ID', '<image1>')
+msg.attach(image)
 # f = open('top.txt')
 # Lines=f.readlines()
 # body = Lines[0]+ Lines[1]+ Lines[2]+ Lines[3]

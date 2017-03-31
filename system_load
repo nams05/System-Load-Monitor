@@ -14,7 +14,7 @@ until [[ $hours -eq "23" ]] && [[ $mins -eq "59" ]] && [[ $secs -eq "59" ]] #run
 do
 	Time=$(date +%H_%M_%S)
 	hour_temp=$(date +%H)
-	hours=${hour_temp#0}    #strip tailing 0
+	hours=${hour_temp#0}    #strip trailing 0
 	min_temp=$(date +%M)
 	mins=${min_temp#0}	
 	sec_temp=$(date +%S)
@@ -24,7 +24,7 @@ do
 	Cpu=$(mpstat 1 1| grep -A 5 "%idle" | tail -n 1 | awk -F " " '{print 100 -  $12}') 
 	echo -n "$Cpu " >> $current/$Date.txt
 	vmstat -s | grep "used memory" | awk '{print $1}' >> $current/$Date.txt
-	echo "$hours $mins $sec "
+	
 done
 
 python $current/send_report.py $current/$Date.txt  

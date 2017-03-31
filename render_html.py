@@ -34,6 +34,7 @@ html='''<!DOCTYPE html>
 		table {
     	border-spacing: 5px;
     	width:60%;
+    	margin:auto;
     	}
 		th{
 		background-color: black;
@@ -41,7 +42,7 @@ html='''<!DOCTYPE html>
 		}
 		table, th, td {
 
-    	border: 2px solid black;
+    	border: 2px solid white;
     	border-collapse: collapse;
     	}
     	th, td {
@@ -53,6 +54,13 @@ html='''<!DOCTYPE html>
 		margin :8px;
 		margin-bottom: 8px;	
 		}
+		img{
+			display: block;
+			margin:auto;
+			border: 1px solid #ddd;
+		    width: 60%;
+		}
+
 
 	</style>
 </head>
@@ -69,4 +77,6 @@ with open(sys.argv[1]) as f:
 	for i in range(0,len(content),3):
 		ram=((float(content[i+2]))/total_memory)*100.
 		html+="<tr style=\"background-color:"+color(ram)+"\"><td>"+str(content[i])+"</td><td>"+str(content[i+1])+"</td><td>"+str(ram)+"</td></tr>"
-html+="</table><img src=\""+date+'_graph.png'+"\"></body></html>"
+html+="</table><br><br><img src=\"cid:image1\"></body></html>"
+
+
