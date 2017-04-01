@@ -12,8 +12,72 @@ import Tkinter
 import datetime
 import dotenv #to use .env file
 import array
-import render_html
 
+#function to define color code of rows
+def color(cpu):
+	if(cpu<=10):
+		return "#FDB22B"
+	elif(cpu<=20):
+		return "#F00088"
+	elif(cpu<=30):
+		return "#2A58C3"
+	elif(cpu<=40):
+		return "#94D301"
+	elif(cpu<=50):
+		return "#8408BA"
+	elif(cpu<=60):
+		return "#01A5AD"
+	elif(cpu<=70):
+		return "#FF7C03"
+	elif(cpu<=80):
+		return "#B2C300"
+	elif(cpu<=90):
+		return "#AEB18C"
+	else:
+		return "#01A5AD"	
+
+html='''<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		table {
+    	border-spacing: 5px;
+    	width:60%;
+    	margin:auto;
+    	}
+		th{
+		background-color: black;
+    	color: white;
+		}
+		table, th, td {
+
+    	border: 2px solid white;
+    	border-collapse: collapse;
+    	}
+    	th, td {
+    	padding: 10px;
+    	text-align: center;
+		}
+		caption{
+		font:15px Helvetica ;
+		margin :8px;
+		margin-bottom: 8px;	
+		}
+		img{
+			display: block;
+			margin:auto;
+			border: 1px solid #ddd;
+		    width: 60%;
+		}
+
+
+	</style>
+</head>
+<body>
+
+		<table>
+			<tr><th>Time(hr)</th><th>CPU Usage(%)</th><th>RAM Usage(%)</th></tr>
+'''
 dotenv.load()
 
 now=datetime.datetime.now()
@@ -54,9 +118,8 @@ for i in range(0,24):
 		continue
 	cpu_usage_avg[i]=cpu_usage_avg[i]/count[i]
 	ram_usage_avg[i]=ram_usage_avg[i]/count[i]
-	render_html.html+="<tr style=\"background-color:"+render_html.color(ram_usage_avg)+"\"><td>"+str(i)+"</td><td>"+str(cpu_usage_avg[i])+"</td><td>"+str(ram_usage_avg[i])+"</td></tr>"
-
-render_html.html+="</table><br><br><img src=\"cid:image1\"></body></html>"
+	html+="<tr style=\"background-color:"+color(ram_usage_avg)+"\"><td>"+str(i)+"</td><td>"+str(cpu_usage_avg[i])+"</td><td>"+str(ram_usage_avg[i])+"</td></tr>"
+html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 
 
 #plotting the graph using the 3 lists
@@ -97,7 +160,7 @@ msg['Cc'] = cc
 msg['Subject'] = "Report : " + date
 msg.preamble = "System Load Report"
 
-html_body=render_html.html
+html_body=html
 
 html_part=MIMEText(html_body,'html')
 msg.attach(html_part)
