@@ -2,9 +2,8 @@
 The script monitors you system's load every second and the data is recorded in a file. A new file is created everyday. At the end of the day the file is read and a graph is generated. Average load per hour is calculated and sent with the graph via mail. 
 
 # How to run the script
-* Change the file permission to make it executable
 ```
-chmod +x system_load
+python /path/to/the/file/system_load.py
 ```
 * Edit the root's cron file
 ``` 
