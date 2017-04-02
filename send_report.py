@@ -102,6 +102,7 @@ hr=[]
 for i in time:
 	hr.append(i/3600)
 
+
 cpu_usage_avg=array.array('f',(0,)*24)
 ram_usage_avg=array.array('f',(0,)*24)
 count=array.array('i',(0,)*24)
@@ -116,8 +117,8 @@ for i in range(1,len(hr)):
 for i in range(0,24):
 	if (count[i]==0):
 		continue
-	cpu_usage_avg[i]=cpu_usage_avg[i]/count[i]
-	ram_usage_avg[i]=ram_usage_avg[i]/count[i]
+	cpu_usage_avg[i]="{0:.2f}".format(cpu_usage_avg[i]/count[i])
+	ram_usage_avg[i]="{0:.2f}".format(ram_usage_avg[i]/count[i])
 	html+="<tr style=\"background-color:"+color(ram_usage_avg)+"\"><td>"+str(i)+"</td><td>"+str(cpu_usage_avg[i])+"</td><td>"+str(ram_usage_avg[i])+"</td></tr>"
 html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 
@@ -147,7 +148,7 @@ plt.savefig(date+'_graph.jpg')
 
 # compose the email
 fromaddr = "namrata.gupta05@gmail.com"
-toaddr = "hemant6488@gmail.com"
+toaddr = "namrata.gupta05@gmail.com"
 cc="chipndale134@gmail.com"
 bcc="namrata.gupta05@gmail.com"
 rcpt=[cc]  + [bcc]+ [toaddr]
