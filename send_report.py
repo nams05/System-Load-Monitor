@@ -95,8 +95,7 @@ with open(sys.argv[1]) as f:
 		elif (i%3==1):
 			cpu_usage.append(float(word))
 		elif (i%3==2):
-			ram=((float(word))/total_memory)*100.
-			ram_usage.append(ram)
+			ram_usage.append(float(word))
 		i=i+1
 hr=[]	
 for i in time:
@@ -117,8 +116,8 @@ for i in range(1,len(hr)):
 for i in range(0,24):
 	if (count[i]==0):
 		continue
-	cpu_usage_avg[i]="{0:.2f}".format(cpu_usage_avg[i]/count[i])
-	ram_usage_avg[i]="{0:.2f}".format(ram_usage_avg[i]/count[i])
+	cpu_usage_avg[i]=cpu_usage_avg[i]/count[i]
+	ram_usage_avg[i]=ram_usage_avg[i]/count[i]
 	html+="<tr style=\"background-color:"+color(ram_usage_avg)+"\"><td>"+str(i)+"</td><td>"+str(cpu_usage_avg[i])+"</td><td>"+str(ram_usage_avg[i])+"</td></tr>"
 html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 
