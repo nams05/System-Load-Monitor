@@ -6,38 +6,47 @@ import datetime
 import time
 import inspect
 
-# print os.path.realpath(__file__)
-# print inspect.stack()[0][1] 
-# print inspect.getfile(inspect.currentframe()) # script filename (usually with path)
+#calculate cpu usage
+def CPU_usage():
+	cpu=psutil.cpu_times()									
+	total=0
+	for i in cpu:
+		total+=i
+	cpu_usage=100-((cpu[3]/total)*100)
+	return "{0:.2f}".format(cpu_usage)
+
+def Time():
+	now=datetime.datetime.now()	
+	time_tuple=[]
+	time_tuple.append(now.strftime("%H")) #time_tuple[0]=hours
+	time_tuple.append(now.strftime("%M")) #time_tuple[1]=mins
+	time_tuple.append(now.strftime("%S")) #time_tuple[2]=secs
+	time_tuple.append(((int(time_tuple[0])*60)+(int(time_tuple[1])))*60 +int(time_tuple[2])) #time_tuple[3]=total secs
+	return time_tuple
+
 dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 now=datetime.datetime.now()
 date=now.strftime("%d_%m_%y")
 
 f=open(date+'.txt',"a" )
-hours=now.strftime("%H")
-mins=now.strftime("%M")
-secs=now.strftime("%S")
 
 while  1 :
-	now=datetime.datetime.now()
-	hours=now.strftime("%H")
-	mins=now.strftime("%M")
-	secs=now.strftime("%S")
-	total_secs=((int(hours)*60)+(int(mins)))*60 +int(secs)
-	cpu=psutil.cpu_times()									
-	total=0
-	for i in cpu:
-		total+=i
-	cpu_usage=100-((cpu[3]/total)*100)
+	time_tuple=Time()
+	cpu_usage=CPU_usage()
+	#calculate RAM usage
 	VM=psutil.virtual_memory()
-	f.write(str(total_secs)+" "+str(cpu_usage)+" "+str(VM[2])+"\n")
+	f.write(str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+"\n")
+	print (str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+"\n")
 	time.sleep(1)
-	if (hours == "23") and (mins =="38") and (secs == "59"):
+	#break the loop at EOD
+	if (time_tuple[0] == "23") and (time_tuple[1] =="59") and (time_tuple[2] == "58"):
 		break
 	
 f.close
+# call the send_report script with 1 argument ie file of that day
 sys.argv=['send_report.py',date+".txt"]
 execfile("send_report.py")
-sleep(1)
+time.sleep(1)
+#call this script again
 execfile("system_load.py")
