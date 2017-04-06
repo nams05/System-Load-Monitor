@@ -1,7 +1,7 @@
 import sys
 import smtplib
 import os
-import time;
+import time
 from email.MIMEMultipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from email.MIMEText import MIMEText
@@ -152,10 +152,10 @@ html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 plot_graph(date,time,cpu_usage_avg,ram_usage_avg)
 
 # compose the email
-fromaddr = "namrata.gupta05@gmail.com"
-toaddr = "hemant6488@gmail.com"
-cc="chipndale134@gmail.com"
-bcc="namrata.gupta05@gmail.com"
+fromaddr = dotenv.get("From")
+toaddr = dotenv.get("To")
+cc= dotenv.get("Cc")
+bcc= dotenv.get("Bcc")
 rcpt=[cc]  + [bcc]+ [toaddr]
 img_data = open(date+'_graph.jpg', 'rb').read()
 msg = MIMEMultipart()
@@ -188,7 +188,7 @@ server.starttls()
 server.ehlo()
 
 #Next, log in to the server
-server.login("namrata.gupta05@gmail.com", dotenv.get("PASSWORD"))
+server.login(dotenv.get("From"), dotenv.get("PASSWORD"))
 text=msg.as_string() #object to string
 #Send the mail
 server.sendmail(fromaddr, rcpt, text)
