@@ -106,50 +106,125 @@ def plot_graph(date,time,cpu_usage_avg,ram_usage_avg):
 
 dotenv.load()
 
-now=datetime.datetime.now()
-date=now.strftime("%d_%m_%y")
 #reading the file from bash script and making 3 lists for time,cpu usage , ram usage
 i=0
 time=[]
 cpu_usage=[]
 ram_usage=[]
-total_memory=3758412.0
+swap=[]
+uptime=[]
+users=[]
+total_process=[]
+running_process=[]
+sleeping_process=[]
+zombie_process=[]
+read_speed=[]
+write_speed=[]
+up_speed=[]
+down_speed=[]
+
 with open(sys.argv[1]) as f:
 	for word in f.read().split():
-		if (i%3==0):
+		if (i%14==0):
 			time.append(int(word))
-		elif (i%3==1):
+		elif (i%14==1):
 			cpu_usage.append(float(word))
-		elif (i%3==2):
+		elif (i%14==2):
 			ram_usage.append(float(word))
+		elif (i%14==3):
+			swap.append(float(word))
+		elif (i%14==4):
+			uptime.append(int(word))
+		elif (i%14==5):
+			users.append(int(word))
+		elif (i%14==6):
+			total_process.append(int(word))
+		elif (i%14==7):
+			running_process.append(int(word))
+		elif (i%14==8):
+			sleeping_process.append(int(word))
+		elif (i%14==9):
+			zombie_process.append(int(word))
+		elif (i%14==10):
+			read_speed.append(float(word))
+		elif (i%14==11):
+			write_speed.append(float(word))
+		elif (i%14==12):
+			up_speed.append(float(word))
+		elif (i%14==13):
+			down_speed.append(float(word))
 		i=i+1
-hr=[]	
+
 for i in time:
 	hr.append(i/3600)
 
 
 cpu_usage_avg=array.array('f',(0,)*24)
 ram_usage_avg=array.array('f',(0,)*24)
+swap_avg=array.array('f',(0,)*24)
+uptime_avg=array.array('i',(0,)*24)
+users_avg=array.array('i',(0,)*24)
+total_process_avg=array.array('i',(0,)*24)
+running_process_avg=array.array('i',(0,)*24)
+sleeping_process_avg=array.array('i',(0,)*24)
+zombie_process_avg=array.array('i',(0,)*24)
+read_speed_avg=array.array('f',(0,)*24)
+write_speed_avg=array.array('f',(0,)*24)
+up_speed_avg=array.array('f',(0,)*24)
+down_speed_avg=array.array('f',(0,)*24)
 count=array.array('i',(0,)*24)
 
 html=render_html()
 cpu_usage_avg[hr[0]]+=cpu_usage[0]
 ram_usage_avg[hr[0]]+=ram_usage[0]
+swap_avg[hr[0]]+=swap[0]
+uptime_avg[hr[0]]+=uptime[0]
+users_avg[hr[0]]+=users[0]
+total_process_avg[hr[0]]+=total_process[0]
+running_process_avg[hr[0]]+=running_process[0]
+sleeping_process_avg[hr[0]]+=sleeping_process[0]
+zombie_process_avg[hr[0]]+=zombie_process[0]
+read_speed_avg[hr[0]]+=read_speed[0]
+write_speed_avg[hr[0]]+=write_speed[0]
+up_speed_avg[hr[0]]+=up_speed[0]
+down_speed[hr[0]]+=down_speed[0]
 count[hr[0]]+=1
 for i in range(1,len(hr)):
 		cpu_usage_avg[hr[i]]+=cpu_usage[i]
 		ram_usage_avg[hr[i]]+=ram_usage[i]
+		swap_avg[hr[i]]+=swap[i]
+		uptime_avg[hr[i]]+=uptime[i]
+		users_avg[hr[i]]+=users[i]
+		total_process_avg[hr[i]]+=total_process[i]
+		running_process_avg[hr[i]]+=running_process[i]
+		sleeping_process_avg[hr[i]]+=sleeping_process[i]
+		zombie_process_avg[hr[i]]+=zombie_process[i]
+		read_speed_avg[hr[i]]+=read_speed[i]
+		write_speed_avg[hr[i]]+=write_speed[i]
+		up_speed_avg[hr[i]]+=up_speed[i]
+		down_speed[hr[i]]+=down_speed[i]
 		count[hr[i]]+=1	
 for i in range(0,24):
 	if (count[i]==0):
 		continue
 	cpu_usage_avg[i]=cpu_usage_avg[i]/count[i]
 	ram_usage_avg[i]=ram_usage_avg[i]/count[i]
+	swap_avg[hr[i]]=swap[i]/count[i]
+	uptime_avg[hr[i]]=uptime[i]/count[i]
+	users_avg[hr[i]]=users[i]/count[i]
+	total_process_avg[hr[i]]=total_process[i]/count[i]
+	running_process_avg[hr[i]]=running_process[i]/count[i]
+	sleeping_process_avg[hr[i]]=sleeping_process[i]/count[i]
+	zombie_process_avg[hr[i]]=zombie_process[i]/count[i]
+	read_speed_avg[hr[i]]=read_speed[i]/count[i]
+	write_speed_avg[hr[i]]=write_speed[i]/count[i]
+	up_speed_avg[hr[i]]=up_speed[i]/count[i]
+	down_speed[hr[i]]=down_speed[i]/count[i]
 	html+="<tr style=\"background-color:"+color(ram_usage_avg[i])+"\"><td>"+str(i)+"</td><td>"+str("{0:.2f}".format(cpu_usage_avg[i]))+"</td><td>"+str("{0:.2f}".format(ram_usage_avg[i]))+"</td></tr>"
 html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 
 
-plot_graph(date,time,cpu_usage_avg,ram_usage_avg)
+plot_graph(sys.argv[3],time,cpu_usage_avg,ram_usage_avg)
 
 # compose the email
 fromaddr = dotenv.get("From")
@@ -163,7 +238,7 @@ msg['From'] = fromaddr
 msg['To'] = toaddr
 msg['Bcc'] = bcc 
 msg['Cc'] = cc
-msg['Subject'] = "Report : " + date
+msg['Subject'] = "Report : " + sys.argv[3]
 msg.preamble = "System Load Report"
 
 html_body=html
