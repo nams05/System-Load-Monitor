@@ -81,7 +81,7 @@ def render_html():
 	'''
 	return html
 
-def plot_graph(date,time,cpu_usage_avg,ram_usage_avg):
+def plot_graph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,load):
 	#plotting the graph using the 3 lists
 	plt.close('all')
 	fig_size = plt.rcParams["figure.figsize"] #set the size of the generated graph 
@@ -89,18 +89,133 @@ def plot_graph(date,time,cpu_usage_avg,ram_usage_avg):
 	fig_size[0] = 20
 	fig_size[1] = 10
 	plt.rcParams["figure.figsize"] = fig_size
-	cpu=plt.plot(time,cpu_usage,'r',label='CPU Usage(%)') # plotting time,cpu_usage separately 
-	ram=plt.plot(time,ram_usage,'g',label='RAM Usage(%)') # plotting time,ram_usage separately
+	cpu=plt.plot(time_secs,cpu_usage,'r',label='CPU Usage(%)') # plotting time,cpu_usage separately 
 	# plt.xticks(np.arange(0, 24 , 2))
 	plt.yticks(np.arange(0, 110 , 10))
 	plt.setp(cpu,color='r', linewidth=1.0)
-	plt.setp(ram, color='g', linewidth=1.0)
 	plt.legend(loc='upper right')
-	plt.xlabel('time (secs)')
-	plt.ylabel('load(%)')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('CPU(%)')
 	# plt.axis([0, 23,0,100],facecolor='b')
 	plt.grid(True)
-	plt.savefig(date+'_graph.jpg')
+	plt.savefig(date_1+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	ram=plt.plot(time_secs,ram_usage,'r',label='RAM Usage(%)') # plotting time,ram_usage separately
+	Swap=plt.plot(time_secs,swap,'g',label='Swap Memory(%)')
+	# plt.xticks(np.arange(0, 24 , 2))
+	plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(ram,color='r', linewidth=1.0)
+	plt.setp(Swap,color='g', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('Memory(%)')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_2+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	Uptime=plt.plot(time_secs,uptime,'r') # plotting time,ram_usage separately
+	# plt.xticks(np.arange(0, 24 , 2))
+	#plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(Uptime,color='r', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('Uptime')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_3+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	Users=plt.plot(time_secs,users,'r') # plotting time,ram_usage separately
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(Users,color='r', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('No. of users')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_4+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	TotalProcess=plt.plot(time_secs,total_process,'r',label='Total Processes') # plotting time,ram_usage separately
+	Running=plt.plot(time_secs,running_process,'m',label='Running Processes')
+	Sleeping=plt.plot(time_secs,sleeping_process,'g',label='Sleeping Processes')
+	Zombie=plt.plot(time_secs,zombie_process,'c',label='Zombie Processes')
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(TotalProcess,color='r', linewidth=1.0)
+	plt.setp(Running,color='m', linewidth=1.0)
+	plt.setp(Sleeping,color='g', linewidth=1.0)
+	plt.setp(Zombie,color='c', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('Processes')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_5+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	Read=plt.plot(time_secs,read_speed,'r',label='Read Speed(kB/s)') # plotting time,ram_usage separately
+	Write=plt.plot(time_secs,write_speed,'g',label='Write Speed(kB/s)')
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(Read,color='r', linewidth=1.0)
+	plt.setp(Write,color='g', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('Disk Operations')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_6+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	Up=plt.plot(time_secs,up_speed,'r',label='Up Speed(kB/s)') # plotting time,ram_usage separately
+	Down=plt.plot(time_secs,down_speed,'g',label='Down Speed(kB/s)')
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(Up,color='r', linewidth=1.0)
+	plt.setp(Down,color='g', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (secs)')
+	plt.ylabel('Network Speed (kB/s)')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_7+'_graph.jpg')
+
+	fig_size = plt.rcParams["figure.figsize"] 
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	Load=plt.plot(time_mins,load,'r') # plotting time,ram_usage separately
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	plt.setp(Load,color='r', linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel('Time (mins)')
+	plt.ylabel('Load Average')
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(date_8+'_graph.jpg')
 
 
 
@@ -108,7 +223,7 @@ dotenv.load()
 
 #reading the file from bash script and making 3 lists for time,cpu usage , ram usage
 i=0
-time=[]
+time_secs=[]
 cpu_usage=[]
 ram_usage=[]
 swap=[]
@@ -122,11 +237,12 @@ read_speed=[]
 write_speed=[]
 up_speed=[]
 down_speed=[]
+hr=[]
 
 with open(sys.argv[1]) as f:
 	for word in f.read().split():
 		if (i%14==0):
-			time.append(int(word))
+			time_secs.append(int(word))
 		elif (i%14==1):
 			cpu_usage.append(float(word))
 		elif (i%14==2):
@@ -155,7 +271,35 @@ with open(sys.argv[1]) as f:
 			down_speed.append(float(word))
 		i=i+1
 
-for i in time:
+j=0
+hr2=[]
+time_mins=[]
+load=[]
+with open(sys.argv[2]) as fs:
+	for word in fs.read().split():
+		if(j%2==0)
+			time_mins.append(int(word))
+		elif(j%2==1)
+			load.append(float(word))
+		j+=1
+
+for i in time_mins:
+	hr2.append(i/60)
+
+load_avg=array.array('f',(0,)*24)
+count2=array.array('i',(0,)*24)
+load_avg[hr2[0]]+=load[0]	
+count2[hr2[0]]+=1	
+for i in range(1,len(hr2)):
+		load_avg[hr2[i]]+=load[i]
+		count2[hr2[i]]+=1	
+
+for i in range(0,24):
+	if (count2[i]==0):
+		continue
+	load_avg[i]=load_avg[i]/count2[i]
+
+for i in time_secs:
 	hr.append(i/3600)
 
 
@@ -189,6 +333,7 @@ write_speed_avg[hr[0]]+=write_speed[0]
 up_speed_avg[hr[0]]+=up_speed[0]
 down_speed[hr[0]]+=down_speed[0]
 count[hr[0]]+=1
+
 for i in range(1,len(hr)):
 		cpu_usage_avg[hr[i]]+=cpu_usage[i]
 		ram_usage_avg[hr[i]]+=ram_usage[i]
@@ -204,6 +349,7 @@ for i in range(1,len(hr)):
 		up_speed_avg[hr[i]]+=up_speed[i]
 		down_speed[hr[i]]+=down_speed[i]
 		count[hr[i]]+=1	
+
 for i in range(0,24):
 	if (count[i]==0):
 		continue
@@ -224,7 +370,7 @@ for i in range(0,24):
 html+="</table><br><br><img src=\"cid:image1\"></body></html>"
 
 
-plot_graph(sys.argv[3],time,cpu_usage_avg,ram_usage_avg)
+plot_graph(sys.argv[3],time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,load)
 
 # compose the email
 fromaddr = dotenv.get("From")
