@@ -21,4 +21,4 @@
 #
 # m h  dom mon dow   command
 #The following command will run the script at 0 mins every hour of every day.
-@reboot /home/execute/this/script/system_load 
+@reboot /path/to/python /absolute/path/to/system_load.py 
