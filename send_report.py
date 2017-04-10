@@ -1,5 +1,5 @@
 import sys
-import smtplib
+import smtplib #to send email
 import os
 import time
 from email.MIMEMultipart import MIMEMultipart
@@ -8,13 +8,13 @@ from email.MIMEText import MIMEText
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import Tkinter
+import Tkinter 
 import datetime
 import dotenv #to use .env file
 import array
-import inspect
-import socket
-from urllib2 import urlopen
+import inspect #  to get working directory
+import socket # for hostname
+from urllib2 import urlopen # to get IP address 
 
 #function to define color code of rows
 def color(cpu):
@@ -38,8 +38,13 @@ def color(cpu):
 		return "#AEB18C"
 	else:
 		return "#01A5AD"	
+def typeOf(attribute)
+	if type(attribute)==float:
+		return 'f'
+	elif type(attribute)==int:
+		return 'i'
 
-def render_html(hostname, ip):
+def renderHtml(hostname, ip):
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -85,9 +90,7 @@ def render_html(hostname, ip):
 			'''	
 	return html
 
-dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-
-def plot_graph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load):
+def plotGraph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load):
 	#plotting the graph using the 3 lists
 	plt.close('all')
 	fig_size = plt.rcParams["figure.figsize"] #set the size of the generated graph 
@@ -230,72 +233,78 @@ def plot_graph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,to
 	plt.grid(True)
 	plt.savefig(dir+'/graph/'+date+'_8_graph.jpg')
 
+#reading the file from bash script and making 14 lists for time,cpu usage , ram usage
+def readFile(filename):
+	i=0
+	time_secs=[]
+	cpu_usage=[]
+	ram_usage=[]
+	swap=[]
+	uptime=[]
+	users=[]
+	total_process=[]
+	running_process=[]
+	sleeping_process=[]
+	zombie_process=[]
+	read_speed=[]
+	write_speed=[]
+	up_speed=[]
+	down_speed=[]
+	hr=[]
+
+	with open(filename) as f:
+		for word in f.read().split():
+			if (i%14==0):
+				time_secs.append(int(word))
+			elif (i%14==1):
+				cpu_usage.append(float(word))
+			elif (i%14==2):
+				ram_usage.append(float(word))
+			elif (i%14==3):
+				swap.append(float(word))
+			elif (i%14==4):
+				uptime.append(int(word))
+			elif (i%14==5):
+				users.append(int(word))
+			elif (i%14==6):
+				total_process.append(int(word))
+			elif (i%14==7):
+				running_process.append(int(word))
+			elif (i%14==8):
+				sleeping_process.append(int(word))
+			elif (i%14==9):
+				zombie_process.append(int(word))
+			elif (i%14==10):
+				read_speed.append(float(word))
+			elif (i%14==11):
+				write_speed.append(float(word))
+			elif (i%14==12):
+				up_speed.append(float(word))
+			elif (i%14==13):
+				down_speed.append(float(word))
+			i=i+1
+
+return [time_secs,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed]
+
+def readFile2(filename):
+	j=0
+	hr2=[]
+	time_mins=[]
+	average_load=[]
+	with open(filename) as fs:
+		for word in fs.read().split():
+			if(j%2==0):
+				time_mins.append(int(word))
+			elif(j%2==1):
+				average_load.append(float(word))
+			j+=1
+
+def calculateAvg(time,attribute,):
 
 hostname=socket.gethostname()
 ip= urlopen('http://ip.42.pl/raw').read()
 dotenv.load()
-
-#reading the file from bash script and making 3 lists for time,cpu usage , ram usage
-i=0
-time_secs=[]
-cpu_usage=[]
-ram_usage=[]
-swap=[]
-uptime=[]
-users=[]
-total_process=[]
-running_process=[]
-sleeping_process=[]
-zombie_process=[]
-read_speed=[]
-write_speed=[]
-up_speed=[]
-down_speed=[]
-hr=[]
-
-with open(sys.argv[1]) as f:
-	for word in f.read().split():
-		if (i%14==0):
-			time_secs.append(int(word))
-		elif (i%14==1):
-			cpu_usage.append(float(word))
-		elif (i%14==2):
-			ram_usage.append(float(word))
-		elif (i%14==3):
-			swap.append(float(word))
-		elif (i%14==4):
-			uptime.append(int(word))
-		elif (i%14==5):
-			users.append(int(word))
-		elif (i%14==6):
-			total_process.append(int(word))
-		elif (i%14==7):
-			running_process.append(int(word))
-		elif (i%14==8):
-			sleeping_process.append(int(word))
-		elif (i%14==9):
-			zombie_process.append(int(word))
-		elif (i%14==10):
-			read_speed.append(float(word))
-		elif (i%14==11):
-			write_speed.append(float(word))
-		elif (i%14==12):
-			up_speed.append(float(word))
-		elif (i%14==13):
-			down_speed.append(float(word))
-		i=i+1
-
-j=0
-hr2=[]
-time_mins=[]
-average_load=[]
-with open(sys.argv[2]) as fs:
-	for word in fs.read().split():
-		if(j%2==0):
-			time_mins.append(int(word))
-		elif(j%2==1):
-			average_load.append(float(word))
-		j+=1
+dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 for i in time_mins:
 	hr2.append(i/60)
@@ -315,6 +324,7 @@ for i in range(0,24):
 
 for i in time_secs:
 	hr.append(i/3600)
+
 
 
 cpu_usage_avg=array.array('f',(0,)*24)
