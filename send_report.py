@@ -407,7 +407,7 @@ msg['From'] = fromaddr
 msg['To'] = toaddr
 msg['Bcc'] = bcc 
 msg['Cc'] = cc
-msg['Subject'] = "Report : " + sys.argv[3] +"@"+ hostname
+msg['Subject'] = "Report : " + sys.argv[3] +" from "+ hostname
 msg.preamble = "System Load Report"
 
 html_body=html
