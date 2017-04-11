@@ -97,7 +97,8 @@ def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,user
 	return html
 
 def plotGraph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load):
-	#plotting the graph using the 3 lists
+	#plotting the graph using the given lists
+	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 	plt.close('all')
 	fig_size = plt.rcParams["figure.figsize"] #set the size of the generated graph 
 	# Set figure width to 20 and height to 10
@@ -320,11 +321,77 @@ def calculateAvg(hour,attribute):
 		attribute_avg[i]=attribute_avg[i]/count[i]
 	return attribute_avg.tolist()   #return the array as a list
 
-hostname=socket.gethostname() 
-ip= urlopen('http://ip.42.pl/raw').read() #for ip
-dotenv.load()
-dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
+def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
+	hostname=socket.gethostname() 
+	ip= urlopen('http://ip.42.pl/raw').read() #for ip
+	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
+	img_data_1 = open(dir+'/graph/'+date+'_1_graph.jpg', 'rb').read()
+	img_data_2 = open(dir+'/graph/'+date+'_2_graph.jpg', 'rb').read()
+	img_data_3 = open(dir+'/graph/'+date+'_3_graph.jpg', 'rb').read()
+	img_data_4 = open(dir+'/graph/'+date+'_4_graph.jpg', 'rb').read()
+	img_data_5 = open(dir+'/graph/'+date+'_5_graph.jpg', 'rb').read()
+	img_data_6 = open(dir+'/graph/'+date+'_6_graph.jpg', 'rb').read()
+	img_data_7 = open(dir+'/graph/'+date+'_7_graph.jpg', 'rb').read()
+	img_data_8 = open(dir+'/graph/'+date+'_8_graph.jpg', 'rb').read()
+	msg = MIMEMultipart()
+	msg['From'] = fromaddr
+	msg['To'] = toaddr
+	msg['Bcc'] = bcc 
+	msg['Cc'] = cc
+	msg['Subject'] = "Report : " + date +" from "+ hostname
+	msg.preamble = "System Load Report"
 
+	html_part=MIMEText(html_body,'html')
+	msg.attach(html_part)
+
+
+	image_1 = MIMEImage(img_data_1, name=os.path.basename(dir+'/graph/'+date+'_1_graph.jpg'))
+	image_2 = MIMEImage(img_data_2, name=os.path.basename(dir+'/graph/'+date+'_2_graph.jpg'))
+	image_3 = MIMEImage(img_data_3, name=os.path.basename(dir+'/graph/'+date+'_3_graph.jpg'))
+	image_4 = MIMEImage(img_data_4, name=os.path.basename(dir+'/graph/'+date+'_4_graph.jpg'))
+	image_5 = MIMEImage(img_data_5, name=os.path.basename(dir+'/graph/'+date+'_5_graph.jpg'))
+	image_6 = MIMEImage(img_data_6, name=os.path.basename(dir+'/graph/'+date+'_6_graph.jpg'))
+	image_7 = MIMEImage(img_data_7, name=os.path.basename(dir+'/graph/'+date+'_7_graph.jpg'))
+	image_8 = MIMEImage(img_data_8, name=os.path.basename(dir+'/graph/'+date+'_8_graph.jpg'))
+	image_1.add_header('Content-ID', '<image1>')
+	image_2.add_header('Content-ID', '<image2>')
+	image_3.add_header('Content-ID', '<image3>')
+	image_4.add_header('Content-ID', '<image4>')
+	image_5.add_header('Content-ID', '<image5>')
+	image_6.add_header('Content-ID', '<image6>')
+	image_7.add_header('Content-ID', '<image7>')
+	image_8.add_header('Content-ID', '<image8>')
+	msg.attach(image_1)
+	msg.attach(image_2)
+	msg.attach(image_3)
+	msg.attach(image_4)
+	msg.attach(image_5)
+	msg.attach(image_6)
+	msg.attach(image_7)
+	msg.attach(image_8)
+	# f = open('top.txt')
+	# Lines=f.readlines()
+	# body = Lines[0]+ Lines[1]+ Lines[2]+ Lines[3]
+	# f.close()
+	# msg.attach(MIMEText(body, 'plain')) #attach body to MIME msg
+
+	#create SMTP object for connection
+	server = smtplib.SMTP('smtp.gmail.com', 587)
+	server.ehlo()
+	server.starttls()
+	server.ehlo()
+
+	#Next, log in to the server
+	server.login(dotenv.get("From"), dotenv.get("PASSWORD"))
+	text=msg.as_string() #object to string
+	#Send the mail
+	server.sendmail(fromaddr, rcpt, text)
+
+
+
+
+
+dotenv.load()
 hr=[]
 hr2=[]
 
@@ -382,66 +449,5 @@ toaddr = dotenv.get("To")
 cc= dotenv.get("Cc")
 bcc= dotenv.get("Bcc")
 rcpt=[cc]  + [bcc]+ [toaddr]
-img_data_1 = open(dir+'/graph/'+sys.argv[3]+'_1_graph.jpg', 'rb').read()
-img_data_2 = open(dir+'/graph/'+sys.argv[3]+'_2_graph.jpg', 'rb').read()
-img_data_3 = open(dir+'/graph/'+sys.argv[3]+'_3_graph.jpg', 'rb').read()
-img_data_4 = open(dir+'/graph/'+sys.argv[3]+'_4_graph.jpg', 'rb').read()
-img_data_5 = open(dir+'/graph/'+sys.argv[3]+'_5_graph.jpg', 'rb').read()
-img_data_6 = open(dir+'/graph/'+sys.argv[3]+'_6_graph.jpg', 'rb').read()
-img_data_7 = open(dir+'/graph/'+sys.argv[3]+'_7_graph.jpg', 'rb').read()
-img_data_8 = open(dir+'/graph/'+sys.argv[3]+'_8_graph.jpg', 'rb').read()
-msg = MIMEMultipart()
-msg['From'] = fromaddr
-msg['To'] = toaddr
-msg['Bcc'] = bcc 
-msg['Cc'] = cc
-msg['Subject'] = "Report : " + sys.argv[3] +" from "+ hostname
-msg.preamble = "System Load Report"
-
 html_body=renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg)
-
-html_part=MIMEText(html_body,'html')
-msg.attach(html_part)
-
-
-image_1 = MIMEImage(img_data_1, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_1_graph.jpg'))
-image_2 = MIMEImage(img_data_2, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_2_graph.jpg'))
-image_3 = MIMEImage(img_data_3, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_3_graph.jpg'))
-image_4 = MIMEImage(img_data_4, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_4_graph.jpg'))
-image_5 = MIMEImage(img_data_5, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_5_graph.jpg'))
-image_6 = MIMEImage(img_data_6, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_6_graph.jpg'))
-image_7 = MIMEImage(img_data_7, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_7_graph.jpg'))
-image_8 = MIMEImage(img_data_8, name=os.path.basename(dir+'/graph/'+sys.argv[3]+'_8_graph.jpg'))
-image_1.add_header('Content-ID', '<image1>')
-image_2.add_header('Content-ID', '<image2>')
-image_3.add_header('Content-ID', '<image3>')
-image_4.add_header('Content-ID', '<image4>')
-image_5.add_header('Content-ID', '<image5>')
-image_6.add_header('Content-ID', '<image6>')
-image_7.add_header('Content-ID', '<image7>')
-image_8.add_header('Content-ID', '<image8>')
-msg.attach(image_1)
-msg.attach(image_2)
-msg.attach(image_3)
-msg.attach(image_4)
-msg.attach(image_5)
-msg.attach(image_6)
-msg.attach(image_7)
-msg.attach(image_8)
-# f = open('top.txt')
-# Lines=f.readlines()
-# body = Lines[0]+ Lines[1]+ Lines[2]+ Lines[3]
-# f.close()
-# msg.attach(MIMEText(body, 'plain')) #attach body to MIME msg
-
-#create SMTP object for connection
-server = smtplib.SMTP('smtp.gmail.com', 587)
-server.ehlo()
-server.starttls()
-server.ehlo()
-
-#Next, log in to the server
-server.login(dotenv.get("From"), dotenv.get("PASSWORD"))
-text=msg.as_string() #object to string
-#Send the mail
-server.sendmail(fromaddr, rcpt, text)
+sendMail(sys.argc[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
