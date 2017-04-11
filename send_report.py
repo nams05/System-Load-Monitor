@@ -45,7 +45,7 @@ def typeOf(attribute):
 	elif type(attribute)==int:
 		return 'i'
 
-def renderHtml(hostname, ip):
+def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg):
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -88,7 +88,12 @@ def renderHtml(hostname, ip):
 
 				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU Utilization</th><th colspan="2">Memory Utilization</th><th rowspan="2">Uptime</th><th rowspan="2">Users</th><th colspan="4">No. of Processes</th><th colspan="2">Disk Speed</th><th colspan="2">Network Speed</th></tr>
 				<tr><th>CPU Usage (%)</th><th>Load Average</th><th>RAM (%) </th><th>Swap (%)</th><th>Total</th><th>Running</th><th>Sleeping</th><th>Zombie</th><th>Read Speed (kB/s)</th><th>Write Speed (kB/s)</th><th>Up Speed (kB/s)</th><th>Down Speed (kB/s)</th></tr>
-			'''	
+			'''
+	for i in range(0,24):
+	if (total_process_avg[i]==0 ):
+		continue
+	html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu_usage_avg[i])+"\">"+str(cpu_usage_avg[i])+"</td><td style=\"background-color:"+color(load_avg[i]*20)+"\">"+str("{0:.2f}".format(load_avg[i]))+"</td><td style=\"background-color:"+color(ram_usage_avg[i])+"\">"+str(ram_usage_avg[i])+"</td><td style=\"background-color:"+color(swap_avg[i])+"\">"+str(swap_avg[i])+"</td><td style=\"background-color:"+color(uptime_avg[i]/1000)+"\">"+str(uptime_avg[i])+"</td><td style=\"background-color:"+color(users_avg[i]*7.5)+"\">"+str(users_avg[i])+"</td><td style=\"background-color:"+color(total_process_avg[i]/total_process_avg[i]*100)+"\">"+str(total_process_avg[i])+"</td><td style=\"background-color:"+color(running_process_avg[i]/total_process_avg[i]*100)+"\">"+str(running_process_avg[i])+"</td><td style=\"background-color:"+color(sleeping_process_avg[i]/total_process_avg[i]*100)+"\">"+str(sleeping_process_avg[i])+"</td><td style=\"background-color:"+color(zombie_process_avg[i]/total_process_avg[i]*100)+"\">"+str(zombie_process_avg[i])+"</td><td style=\"background-color:"+color(read_speed_avg[i]*10)+"\">"+str(read_speed_avg[i])+"</td><td style=\"background-color:"+color(write_speed_avg[i]*10)+"\">"+str(write_speed_avg[i])+"</td><td style=\"background-color:"+color(up_speed_avg[i]*10)+"\">"+str(up_speed_avg[i])+"</td><td style=\"background-color:"+color(down_speed_avg[i]*10)+"\">"+str(down_speed_avg[i])+"</td></tr>"
+	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
 def plotGraph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load):
@@ -313,58 +318,47 @@ def calculateAvg(hour,attribute):
 		if(count[hour[i]]==0)
 			continue
 		attribute_avg[i]=attribute_avg[i]/count[i]
-	return attribute_avg
+	return attribute_avg.tolist()   #return the array as a list
 
-hostname=socket.gethostname()
-ip= urlopen('http://ip.42.pl/raw').read()
+hostname=socket.gethostname() 
+ip= urlopen('http://ip.42.pl/raw').read() #for ip
 dotenv.load()
 dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 hr=[]
 hr2=[]
-metrics=[[]]
-metrics2=[[]]
-time_mins=[]
-time_secs=[]
-cpu_usage=[]
-average_load=[]
-ram_usage=[]
-swap=[]
-uptime=[]
-users=[]
-total_process=[]
-sleeping_process=[]
-zombie_process=[]
-read_speed=[]
-write_speed=[]
-up_speed=[]
-down_speed=[]
-cpu_usage_avg=[]
-load_avg=[]
-ram_usage_avg=[]
-swap_avg=[]
-uptime_avg=[]
-users_avg=[]
-total_process_avg=[]
-sleeping_process_avg=[]
-zombie_process_avg=[]
-read_speed_avg=[]
-write_speed_avg=[]
-up_speed_avg=[]
-down_speed_avg=[]
 
-for i in time_mins:
-	hr2.append(i/60)
+#time in mins/secs is converted to hours
 
 for i in time_secs:
 	hr.append(i/3600)
+for i in time_mins:
+	hr2.append(i/60)
 
 html=renderHtml(hostname,ip)
-
 
 metrics=readFile(sys.argv[1])
 metrics2=readFile2(sys.argv[2])
 
+#assign values read from file to respective lists
+time_mins=metrics2[0]
+time_secs=metrics[0]
+cpu_usage=metrics[1]
+average_load=metrics2[1]
+ram_usage=metrics[2]
+swap=metrics[3]
+uptime=metrics[4]
+users=metrics[5]
+total_process=metrics[6]
+running_process=metrics[7]
+sleeping_process=metrics[8]
+zombie_process=metrics[9]
+read_speed=metrics[10]
+write_speed=metrics[11]
+up_speed=metrics[12]
+down_speed=metrics[13]
+
+#calculate avg of each attribute
 cpu_usage_avg=calculateAvg(hr,cpu_usage)
 load_avg=calculateAvg(hr2,average_load)
 ram_usage_avg=calculateAvg(hr,ram_usage)
@@ -379,12 +373,6 @@ read_speed_avg=calculateAvg(hr,read_speed)
 write_speed_avg=calculateAvg(hr,write_speed)
 up_speed_avg=calculateAvg(hr,up_speed)
 down_speed_avg=calculateAvg(hr,down_speed)
-for i in range(0,24):
-	if (count[i]==0 ):
-		continue
-	html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu_usage_avg[i])+"\">"+str(cpu_usage_avg[i])+"</td><td style=\"background-color:"+color(load_avg[i]*20)+"\">"+str("{0:.2f}".format(load_avg[i]))+"</td><td style=\"background-color:"+color(ram_usage_avg[i])+"\">"+str(ram_usage_avg[i])+"</td><td style=\"background-color:"+color(swap_avg[i])+"\">"+str(swap_avg[i])+"</td><td style=\"background-color:"+color(uptime_avg[i]/1000)+"\">"+str(uptime_avg[i])+"</td><td style=\"background-color:"+color(users_avg[i]*7.5)+"\">"+str(users_avg[i])+"</td><td style=\"background-color:"+color(total_process_avg[i]/total_process_avg[i]*100)+"\">"+str(total_process_avg[i])+"</td><td style=\"background-color:"+color(running_process_avg[i]/total_process_avg[i]*100)+"\">"+str(running_process_avg[i])+"</td><td style=\"background-color:"+color(sleeping_process_avg[i]/total_process_avg[i]*100)+"\">"+str(sleeping_process_avg[i])+"</td><td style=\"background-color:"+color(zombie_process_avg[i]/total_process_avg[i]*100)+"\">"+str(zombie_process_avg[i])+"</td><td style=\"background-color:"+color(read_speed_avg[i]*10)+"\">"+str(read_speed_avg[i])+"</td><td style=\"background-color:"+color(write_speed_avg[i]*10)+"\">"+str(write_speed_avg[i])+"</td><td style=\"background-color:"+color(up_speed_avg[i]*10)+"\">"+str(up_speed_avg[i])+"</td><td style=\"background-color:"+color(down_speed_avg[i]*10)+"\">"+str(down_speed_avg[i])+"</td></tr>"
-html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
-
 
 plotGraph(sys.argv[3],time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load)
 
@@ -410,7 +398,7 @@ msg['Cc'] = cc
 msg['Subject'] = "Report : " + sys.argv[3] +" from "+ hostname
 msg.preamble = "System Load Report"
 
-html_body=html
+html_body=renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg)
 
 html_part=MIMEText(html_body,'html')
 msg.attach(html_part)
