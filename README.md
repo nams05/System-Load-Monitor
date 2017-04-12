@@ -3,10 +3,14 @@ The script monitors you system's load (Cpu usage ,RAM usage,swap memory,download
 
 # How to run the script
 ```
-Just edit the crontab once and reboot.(Much less tedious I hope)
+Just edit the cron file once and reboot.(Much less tedious I hope)
 ```
-* Edit the root's cron file
+* Edit the root's cron file 
 ``` 
 sudo crontab -e
 ```
+* Contents of the cron file
+
+``` @reboot /path/to/python /absolute/path/to/system_load.py  ```
+
 **And voila!!! The script will run continuously and send an automated mail at 2359 hr.** 
