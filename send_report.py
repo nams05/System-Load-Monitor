@@ -46,6 +46,9 @@ def typeOf(attribute):
 		return 'i'
 
 def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg):
+	now=datetime.datetime.now()
+	mail_time=now.strftime("%I:%M:%S %p")
+	date=now.strftime("%d %b %Y")
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -83,7 +86,7 @@ def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,user
 		</style>
 	</head>
 	<body>'''
-	html+="Hostname : "+hostname+"<br>"+"Public IP : "+ip+'''<br>Following table contains various system metrics:<br><br>
+	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ hostname+"<br>Public IP: "+ip+'''<br>Following table contains various system metrics:<br><br>
 			<table>
 
 				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU Utilization</th><th colspan="2">Memory Utilization</th><th rowspan="2">Uptime</th><th rowspan="2">Users</th><th colspan="4">No. of Processes</th><th colspan="2">Disk Speed</th><th colspan="2">Network Speed</th></tr>
@@ -322,6 +325,7 @@ def calculateAvg(hour,attribute):
 	return attribute_avg.tolist()   #return the array as a list
 
 def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
+
 	hostname=socket.gethostname() 
 	ip= urlopen('http://ip.42.pl/raw').read() #for ip
 	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
