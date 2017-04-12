@@ -90,9 +90,9 @@ def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,user
 				<tr><th>CPU Usage (%)</th><th>Load Average</th><th>RAM (%) </th><th>Swap (%)</th><th>Total</th><th>Running</th><th>Sleeping</th><th>Zombie</th><th>Read Speed (kB/s)</th><th>Write Speed (kB/s)</th><th>Up Speed (kB/s)</th><th>Down Speed (kB/s)</th></tr>
 			'''
 	for i in range(0,24):
-	if (total_process_avg[i]==0 ):
-		continue
-	html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu_usage_avg[i])+"\">"+str(cpu_usage_avg[i])+"</td><td style=\"background-color:"+color(load_avg[i]*20)+"\">"+str("{0:.2f}".format(load_avg[i]))+"</td><td style=\"background-color:"+color(ram_usage_avg[i])+"\">"+str(ram_usage_avg[i])+"</td><td style=\"background-color:"+color(swap_avg[i])+"\">"+str(swap_avg[i])+"</td><td style=\"background-color:"+color(uptime_avg[i]/1000)+"\">"+str(uptime_avg[i])+"</td><td style=\"background-color:"+color(users_avg[i]*7.5)+"\">"+str(users_avg[i])+"</td><td style=\"background-color:"+color(total_process_avg[i]/total_process_avg[i]*100)+"\">"+str(total_process_avg[i])+"</td><td style=\"background-color:"+color(running_process_avg[i]/total_process_avg[i]*100)+"\">"+str(running_process_avg[i])+"</td><td style=\"background-color:"+color(sleeping_process_avg[i]/total_process_avg[i]*100)+"\">"+str(sleeping_process_avg[i])+"</td><td style=\"background-color:"+color(zombie_process_avg[i]/total_process_avg[i]*100)+"\">"+str(zombie_process_avg[i])+"</td><td style=\"background-color:"+color(read_speed_avg[i]*10)+"\">"+str(read_speed_avg[i])+"</td><td style=\"background-color:"+color(write_speed_avg[i]*10)+"\">"+str(write_speed_avg[i])+"</td><td style=\"background-color:"+color(up_speed_avg[i]*10)+"\">"+str(up_speed_avg[i])+"</td><td style=\"background-color:"+color(down_speed_avg[i]*10)+"\">"+str(down_speed_avg[i])+"</td></tr>"
+		if (total_process_avg[i]==0 ):
+			continue
+		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu_usage_avg[i])+"\">"+str("{0:.2f}".format(cpu_usage_avg[i]))+"</td><td style=\"background-color:"+color(load_avg[i]*20)+"\">"+str("{0:.2f}".format(load_avg[i]))+"</td><td style=\"background-color:"+color(ram_usage_avg[i])+"\">"+str("{0:.2f}".format(ram_usage_avg[i]))+"</td><td style=\"background-color:"+color(swap_avg[i])+"\">"+str("{0:.2f}".format(swap_avg[i]))+"</td><td style=\"background-color:"+color(uptime_avg[i]/1000)+"\">"+str(uptime_avg[i])+"</td><td style=\"background-color:"+color(users_avg[i]*7.5)+"\">"+str(users_avg[i])+"</td><td style=\"background-color:"+color(total_process_avg[i]/total_process_avg[i]*100)+"\">"+str(total_process_avg[i])+"</td><td style=\"background-color:"+color(running_process_avg[i]/total_process_avg[i]*100)+"\">"+str(running_process_avg[i])+"</td><td style=\"background-color:"+color(sleeping_process_avg[i]/total_process_avg[i]*100)+"\">"+str(sleeping_process_avg[i])+"</td><td style=\"background-color:"+color(zombie_process_avg[i]/total_process_avg[i]*100)+"\">"+str(zombie_process_avg[i])+"</td><td style=\"background-color:"+color(read_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(read_speed_avg[i]))+"</td><td style=\"background-color:"+color(write_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(write_speed_avg[i]))+"</td><td style=\"background-color:"+color(up_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(up_speed_avg[i]))+"</td><td style=\"background-color:"+color(down_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(down_speed_avg[i]))+"</td></tr>"
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
@@ -315,8 +315,8 @@ def calculateAvg(hour,attribute):
 	for i in range(1,len(hour)):
 		attribute_avg[hour[i]]+=attribute[i]
 		count[hour[i]]+=1
-	for i in range(0,24)
-		if(count[hour[i]]==0)
+	for i in range(0,24):
+		if(count[i]==0):
 			continue
 		attribute_avg[i]=attribute_avg[i]/count[i]
 	return attribute_avg.tolist()   #return the array as a list
@@ -338,7 +338,7 @@ def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	msg['To'] = toaddr
 	msg['Bcc'] = bcc 
 	msg['Cc'] = cc
-	msg['Subject'] = "Report : " + date +" from "+ hostname
+	msg['Subject'] = "Daily Report | Date: " + date +" | Hostname: "+ hostname
 	msg.preamble = "System Load Report"
 
 	html_part=MIMEText(html_body,'html')
@@ -388,24 +388,16 @@ def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	server.sendmail(fromaddr, rcpt, text)
 
 
-
+#<---------------------------------MAIN PROGRAM-------------------------------------->
 
 
 dotenv.load()
 hr=[]
 hr2=[]
 
-#time in mins/secs is converted to hours
-
-for i in time_secs:
-	hr.append(i/3600)
-for i in time_mins:
-	hr2.append(i/60)
-
-html=renderHtml(hostname,ip)
-
 metrics=readFile(sys.argv[1])
 metrics2=readFile2(sys.argv[2])
+print "reading files..."
 
 #assign values read from file to respective lists
 time_mins=metrics2[0]
@@ -425,6 +417,13 @@ write_speed=metrics[11]
 up_speed=metrics[12]
 down_speed=metrics[13]
 
+#time in mins/secs is converted to hours
+
+for i in time_secs:
+	hr.append(i/3600)
+for i in time_mins:
+	hr2.append(i/60)
+
 #calculate avg of each attribute
 cpu_usage_avg=calculateAvg(hr,cpu_usage)
 load_avg=calculateAvg(hr2,average_load)
@@ -442,7 +441,9 @@ up_speed_avg=calculateAvg(hr,up_speed)
 down_speed_avg=calculateAvg(hr,down_speed)
 
 plotGraph(sys.argv[3],time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load)
-
+print "plotting graph..."
+hostname=socket.gethostname() 
+ip= urlopen('http://ip.42.pl/raw').read() #for ip
 # compose the email
 fromaddr = dotenv.get("From")
 toaddr = dotenv.get("To")
@@ -450,4 +451,5 @@ cc= dotenv.get("Cc")
 bcc= dotenv.get("Bcc")
 rcpt=[cc]  + [bcc]+ [toaddr]
 html_body=renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg)
-sendMail(sys.argc[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
+sendMail(sys.argv[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
+print "email sent!!!"
