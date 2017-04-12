@@ -49,7 +49,7 @@ def getProcessInfo():
 dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 now=datetime.datetime.now()
-date=now.strftime("%d-%m-%y")
+date=now.strftime("%d %b %Y")
 
 f=open(dir+'/data/'+date+'_per_sec.txt',"a" )
 fs=open(dir+'/data/'+date+'_per_min.txt',"a" )
@@ -65,7 +65,7 @@ while  1 :
 	load_avg=os.getloadavg()
 	proc=getProcessInfo()
 	if (time_tuple[2] == "00"):
-		fs.write(str(time_tuple[4])+" "+str(load_avg[0])+"\n")
+		fs.write(str(time_tuple[4])+" "+str(load_avg[0])+" \n")
 	netstats_before=psutil.net_io_counters(pernic=False)
 	diskstats_before=psutil.disk_io_counters()
 	print (str(time_tuple[0])+" "+str(time_tuple[1])+" "+str(time_tuple[2])+" \n")
