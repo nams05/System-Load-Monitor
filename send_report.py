@@ -16,7 +16,7 @@ import inspect #  to get working directory
 import socket # for hostname
 from urllib2 import urlopen # to get IP address 
 
-#function to define color code of rows
+#function to define color code of each cell
 def color(cpu):
 	if(cpu<=10):
 		return "#FDB22B"
@@ -39,16 +39,18 @@ def color(cpu):
 	else:
 		return "#01A5AD"
 
+#used in calculateAVg()
 def typeOf(attribute):
 	if type(attribute)==float:
 		return 'f'
 	elif type(attribute)==int:
 		return 'i'
 
+#produce html code for email body
 def renderHtml(hostname, ip,*args):
 	now=datetime.datetime.now()
-	mail_time=now.strftime("%I:%M:%S %p")
-	date=now.strftime("%d %b %Y")
+	mail_time=now.strftime("%I:%M:%S %p") # time in 12hour format
+	date=now.strftime("%d %b %Y") # eg 03 Apr 2017
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -93,25 +95,25 @@ def renderHtml(hostname, ip,*args):
 				<tr><th>CPU Usage (%)</th><th>Load Average</th><th>RAM (%) </th><th>Swap (%)</th><th>Total</th><th>Running</th><th>Sleeping</th><th>Zombie</th><th>Read Speed (kB/s)</th><th>Write Speed (kB/s)</th><th>Up Speed (kB/s)</th><th>Down Speed (kB/s)</th></tr>
 			'''
 	for i in range(0,24):
-		if (total_process_avg[i]==0 ):
+		if (args[6][i]==0 ):
 			continue
 		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(args[0][i])+"\">"+str("{0:.2f}".format(args[0][i]))+"</td><td style=\"background-color:"+color(args[1][i]*20)+"\">"+str("{0:.2f}".format(args[1][i]))+"</td><td style=\"background-color:"+color(args[2][i])+"\">"+str("{0:.2f}".format(args[2][i]))+"</td><td style=\"background-color:"+color(args[3][i])+"\">"+str("{0:.2f}".format(args[3][i]))+"</td><td style=\"background-color:"+color(args[4][i]/1000)+"\">"+str(args[4][i])+"</td><td style=\"background-color:"+color(args[5][i]*7.5)+"\">"+str(args[5][i])+"</td><td style=\"background-color:"+color(args[6][i]/args[6][i]*100)+"\">"+str(args[6][i])+"</td><td style=\"background-color:"+color(args[7][i]/args[6][i]*100)+"\">"+str(args[7][i])+"</td><td style=\"background-color:"+color(args[8][i]/args[6][i]*100)+"\">"+str(args[8][i])+"</td><td style=\"background-color:"+color(args[9][i]/args[6][i]*100)+"\">"+str(args[9][i])+"</td><td style=\"background-color:"+color(args[10][i]*10)+"\">"+str("{0:.2f}".format(args[10][i]))+"</td><td style=\"background-color:"+color(args[11][i]*10)+"\">"+str("{0:.2f}".format(args[11][i]))+"</td><td style=\"background-color:"+color(args[12][i]*10)+"\">"+str("{0:.2f}".format(args[12][i]))+"</td><td style=\"background-color:"+color(args[13][i]*10)+"\">"+str("{0:.2f}".format(args[13][i]))+"</td></tr>"
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
 def plotGraph(date,*args):
-	#plotting the graph using the given lists
-	gr_color={0:'r',1:'g',2:'b',3:'m'}
+	#plotting the graph using the lists
+	gr_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
 	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	
 	plt.close('all')
+	#set size of the graph image
 	fig_size = plt.rcParams["figure.figsize"] 
 	fig_size[0] = 20
 	fig_size[1] = 10
 	plt.rcParams["figure.figsize"] = fig_size
 	gr_name=[]
 	for i in range(1,len(args[0])):
-		gr_name.append(plt.plot(args[0][0],args[0][i],'r',label=args[1][i-1])) # plotting time,ram_usage separately
+		gr_name.append(plt.plot(args[0][0],args[0][i],'r',label=args[1][i-1])) # plotting each attribute against time
 	# plt.xticks(np.arange(0, 24 , 2))
 	# plt.yticks(np.arange(0, 110 , 10))
 	for i in range(0,len(gr_name)):
@@ -125,7 +127,7 @@ def plotGraph(date,*args):
 
 	
 
-#reading the file from bash script and making 14 lists for time,cpu usage , ram usage
+#reading the file and segmenting the data into lists
 def readFile(filename):
 	i=0
 	time_secs=[]
@@ -178,6 +180,7 @@ def readFile(filename):
 
 	return [time_secs,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed]
 
+#read file2
 def readFile2(filename):
 	j=0
 	hr2=[]
@@ -192,7 +195,8 @@ def readFile2(filename):
 			j+=1
 	return [time_mins,average_load]
 
-def calculateAvg(hour,attribute):
+
+def calculateAvg(hour,attribute): # avg of each hour
 	attribute_avg=array.array(typeOf(attribute[0]),(0,)*24)
 	count=array.array('i',(0,)*24)
 	attribute_avg[hour[0]]+=attribute[0]
@@ -206,7 +210,8 @@ def calculateAvg(hour,attribute):
 		attribute_avg[i]=attribute_avg[i]/count[i]
 	return attribute_avg.tolist()   #return the array as a list
 
-def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
+
+def sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 
 	hostname=socket.gethostname() 
 	ip= urlopen('http://ip.42.pl/raw').read() #for ip
@@ -299,6 +304,7 @@ write_speed_avg=calculateAvg(hr,write_speed)
 up_speed_avg=calculateAvg(hr,up_speed)
 down_speed_avg=calculateAvg(hr,down_speed)
 
+#plotting all graphs
 plotGraph(sys.argv[3],[time_secs,cpu_usage],['CPU Usage(%)'],['Time (sec)','CPU(%)'],'1')
 plotGraph(sys.argv[3],[time_secs,ram_usage,swap],['RAM Usage(%)','Swap Memory(%)'],['Time (sec)','Memory(%)'],'2')
 plotGraph(sys.argv[3],[time_secs,uptime],['Uptime'],['Time (sec)','Uptime'],'3')
