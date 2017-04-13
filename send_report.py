@@ -45,7 +45,7 @@ def typeOf(attribute):
 	elif type(attribute)==int:
 		return 'i'
 
-def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg):
+def renderHtml(hostname, ip,*args):
 	now=datetime.datetime.now()
 	mail_time=now.strftime("%I:%M:%S %p")
 	date=now.strftime("%d %b %Y")
@@ -95,153 +95,35 @@ def renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,user
 	for i in range(0,24):
 		if (total_process_avg[i]==0 ):
 			continue
-		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu_usage_avg[i])+"\">"+str("{0:.2f}".format(cpu_usage_avg[i]))+"</td><td style=\"background-color:"+color(load_avg[i]*20)+"\">"+str("{0:.2f}".format(load_avg[i]))+"</td><td style=\"background-color:"+color(ram_usage_avg[i])+"\">"+str("{0:.2f}".format(ram_usage_avg[i]))+"</td><td style=\"background-color:"+color(swap_avg[i])+"\">"+str("{0:.2f}".format(swap_avg[i]))+"</td><td style=\"background-color:"+color(uptime_avg[i]/1000)+"\">"+str(uptime_avg[i])+"</td><td style=\"background-color:"+color(users_avg[i]*7.5)+"\">"+str(users_avg[i])+"</td><td style=\"background-color:"+color(total_process_avg[i]/total_process_avg[i]*100)+"\">"+str(total_process_avg[i])+"</td><td style=\"background-color:"+color(running_process_avg[i]/total_process_avg[i]*100)+"\">"+str(running_process_avg[i])+"</td><td style=\"background-color:"+color(sleeping_process_avg[i]/total_process_avg[i]*100)+"\">"+str(sleeping_process_avg[i])+"</td><td style=\"background-color:"+color(zombie_process_avg[i]/total_process_avg[i]*100)+"\">"+str(zombie_process_avg[i])+"</td><td style=\"background-color:"+color(read_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(read_speed_avg[i]))+"</td><td style=\"background-color:"+color(write_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(write_speed_avg[i]))+"</td><td style=\"background-color:"+color(up_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(up_speed_avg[i]))+"</td><td style=\"background-color:"+color(down_speed_avg[i]*10)+"\">"+str("{0:.2f}".format(down_speed_avg[i]))+"</td></tr>"
+		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(args[0][i])+"\">"+str("{0:.2f}".format(args[0][i]))+"</td><td style=\"background-color:"+color(args[1][i]*20)+"\">"+str("{0:.2f}".format(args[1][i]))+"</td><td style=\"background-color:"+color(args[2][i])+"\">"+str("{0:.2f}".format(args[2][i]))+"</td><td style=\"background-color:"+color(args[3][i])+"\">"+str("{0:.2f}".format(args[3][i]))+"</td><td style=\"background-color:"+color(args[4][i]/1000)+"\">"+str(args[4][i])+"</td><td style=\"background-color:"+color(args[5][i]*7.5)+"\">"+str(args[5][i])+"</td><td style=\"background-color:"+color(args[6][i]/args[6][i]*100)+"\">"+str(args[6][i])+"</td><td style=\"background-color:"+color(args[7][i]/args[6][i]*100)+"\">"+str(args[7][i])+"</td><td style=\"background-color:"+color(args[8][i]/args[6][i]*100)+"\">"+str(args[8][i])+"</td><td style=\"background-color:"+color(args[9][i]/args[6][i]*100)+"\">"+str(args[9][i])+"</td><td style=\"background-color:"+color(args[10][i]*10)+"\">"+str("{0:.2f}".format(args[10][i]))+"</td><td style=\"background-color:"+color(args[11][i]*10)+"\">"+str("{0:.2f}".format(args[11][i]))+"</td><td style=\"background-color:"+color(args[12][i]*10)+"\">"+str("{0:.2f}".format(args[12][i]))+"</td><td style=\"background-color:"+color(args[13][i]*10)+"\">"+str("{0:.2f}".format(args[13][i]))+"</td></tr>"
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
-def plotGraph(date,time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load):
+def plotGraph(date,*args):
 	#plotting the graph using the given lists
+	gr_color={0:'r',1:'g',2:'b',3:'m'}
 	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] #set the size of the generated graph 
-	# Set figure width to 20 and height to 10
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	cpu=plt.plot(time_secs,cpu_usage,'r',label='CPU Usage(%)') # plotting time,cpu_usage separately 
-	# plt.xticks(np.arange(0, 24 , 2))
-	plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(cpu,color='r', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('CPU(%)')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_1_graph.jpg')
-
+	
 	plt.close('all')
 	fig_size = plt.rcParams["figure.figsize"] 
 	fig_size[0] = 20
 	fig_size[1] = 10
 	plt.rcParams["figure.figsize"] = fig_size
-	ram=plt.plot(time_secs,ram_usage,'r',label='RAM Usage(%)') # plotting time,ram_usage separately
-	Swap=plt.plot(time_secs,swap,'g',label='Swap Memory(%)')
-	# plt.xticks(np.arange(0, 24 , 2))
-	plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(ram,color='r', linewidth=1.0)
-	plt.setp(Swap,color='g', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('Memory(%)')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_2_graph.jpg')
-
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	Uptime=plt.plot(time_secs,uptime,'r',label='Uptime') # plotting time,ram_usage separately
-	# plt.xticks(np.arange(0, 24 , 2))
-	#plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(Uptime,color='r', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('Uptime')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_3_graph.jpg')
-
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	Users=plt.plot(time_secs,users,'r',label='No. of Users') # plotting time,ram_usage separately
+	gr_name=[]
+	for i in range(1,len(args[0])):
+		gr_name.append(plt.plot(args[0][0],args[0][i],'r',label=args[1][i-1])) # plotting time,ram_usage separately
 	# plt.xticks(np.arange(0, 24 , 2))
 	# plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(Users,color='r', linewidth=1.0)
+	for i in range(0,len(gr_name)):
+		plt.setp(gr_name[i],color=gr_color[i], linewidth=1.0)
 	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('No. of users')
+	plt.xlabel(args[2][0])
+	plt.ylabel(args[2][1])
 	# plt.axis([0, 23,0,100],facecolor='b')
 	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_4_graph.jpg')
+	plt.savefig(dir+'/graph/'+date+'_'+args[3]+'_graph.jpg')
 
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	TotalProcess=plt.plot(time_secs,total_process,'r',label='Total Processes') # plotting time,ram_usage separately
-	Running=plt.plot(time_secs,running_process,'m',label='Running Processes')
-	Sleeping=plt.plot(time_secs,sleeping_process,'g',label='Sleeping Processes')
-	Zombie=plt.plot(time_secs,zombie_process,'c',label='Zombie Processes')
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(TotalProcess,color='r', linewidth=1.0)
-	plt.setp(Running,color='m', linewidth=1.0)
-	plt.setp(Sleeping,color='g', linewidth=1.0)
-	plt.setp(Zombie,color='c', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('Processes')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_5_graph.jpg')
-
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	Read=plt.plot(time_secs,read_speed,'r',label='Read Speed(kB/s)') # plotting time,ram_usage separately
-	Write=plt.plot(time_secs,write_speed,'g',label='Write Speed(kB/s)')
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(Read,color='r', linewidth=1.0)
-	plt.setp(Write,color='g', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('Disk Operations')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+ date+'_6_graph.jpg')
-
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	Up=plt.plot(time_secs,up_speed,'r',label='Up Speed(kB/s)') # plotting time,ram_usage separately
-	Down=plt.plot(time_secs,down_speed,'g',label='Down Speed(kB/s)')
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(Up,color='r', linewidth=1.0)
-	plt.setp(Down,color='g', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (secs)')
-	plt.ylabel('Network Speed (kB/s)')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_7_graph.jpg')
-
-	plt.close('all')
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	Average_load=plt.plot(time_mins,average_load,'r',label='Average load(per min)') # plotting time,ram_usage separately
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	plt.setp(Average_load,color='r', linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel('Time (mins)')
-	plt.ylabel('Average Load')
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_8_graph.jpg')
+	
 
 #reading the file from bash script and making 14 lists for time,cpu usage , ram usage
 def readFile(filename):
@@ -329,14 +211,6 @@ def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	hostname=socket.gethostname() 
 	ip= urlopen('http://ip.42.pl/raw').read() #for ip
 	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	img_data_1 = open(dir+'/graph/'+date+'_1_graph.jpg', 'rb').read()
-	img_data_2 = open(dir+'/graph/'+date+'_2_graph.jpg', 'rb').read()
-	img_data_3 = open(dir+'/graph/'+date+'_3_graph.jpg', 'rb').read()
-	img_data_4 = open(dir+'/graph/'+date+'_4_graph.jpg', 'rb').read()
-	img_data_5 = open(dir+'/graph/'+date+'_5_graph.jpg', 'rb').read()
-	img_data_6 = open(dir+'/graph/'+date+'_6_graph.jpg', 'rb').read()
-	img_data_7 = open(dir+'/graph/'+date+'_7_graph.jpg', 'rb').read()
-	img_data_8 = open(dir+'/graph/'+date+'_8_graph.jpg', 'rb').read()
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
 	msg['To'] = toaddr
@@ -348,31 +222,12 @@ def  sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	html_part=MIMEText(html_body,'html')
 	msg.attach(html_part)
 
+	for i in range(1,9):
+		img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
+		image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
+		image.add_header('Content-ID', '<image'+str(i)+'>')
+		msg.attach(image)
 
-	image_1 = MIMEImage(img_data_1, name=os.path.basename(dir+'/graph/'+date+'_1_graph.jpg'))
-	image_2 = MIMEImage(img_data_2, name=os.path.basename(dir+'/graph/'+date+'_2_graph.jpg'))
-	image_3 = MIMEImage(img_data_3, name=os.path.basename(dir+'/graph/'+date+'_3_graph.jpg'))
-	image_4 = MIMEImage(img_data_4, name=os.path.basename(dir+'/graph/'+date+'_4_graph.jpg'))
-	image_5 = MIMEImage(img_data_5, name=os.path.basename(dir+'/graph/'+date+'_5_graph.jpg'))
-	image_6 = MIMEImage(img_data_6, name=os.path.basename(dir+'/graph/'+date+'_6_graph.jpg'))
-	image_7 = MIMEImage(img_data_7, name=os.path.basename(dir+'/graph/'+date+'_7_graph.jpg'))
-	image_8 = MIMEImage(img_data_8, name=os.path.basename(dir+'/graph/'+date+'_8_graph.jpg'))
-	image_1.add_header('Content-ID', '<image1>')
-	image_2.add_header('Content-ID', '<image2>')
-	image_3.add_header('Content-ID', '<image3>')
-	image_4.add_header('Content-ID', '<image4>')
-	image_5.add_header('Content-ID', '<image5>')
-	image_6.add_header('Content-ID', '<image6>')
-	image_7.add_header('Content-ID', '<image7>')
-	image_8.add_header('Content-ID', '<image8>')
-	msg.attach(image_1)
-	msg.attach(image_2)
-	msg.attach(image_3)
-	msg.attach(image_4)
-	msg.attach(image_5)
-	msg.attach(image_6)
-	msg.attach(image_7)
-	msg.attach(image_8)
 	# f = open('top.txt')
 	# Lines=f.readlines()
 	# body = Lines[0]+ Lines[1]+ Lines[2]+ Lines[3]
@@ -444,7 +299,15 @@ write_speed_avg=calculateAvg(hr,write_speed)
 up_speed_avg=calculateAvg(hr,up_speed)
 down_speed_avg=calculateAvg(hr,down_speed)
 
-plotGraph(sys.argv[3],time_secs,time_mins,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed,average_load)
+plotGraph(sys.argv[3],[time_secs,cpu_usage],['CPU Usage(%)'],['Time (sec)','CPU(%)'],'1')
+plotGraph(sys.argv[3],[time_secs,ram_usage,swap],['RAM Usage(%)','Swap Memory(%)'],['Time (sec)','Memory(%)'],'2')
+plotGraph(sys.argv[3],[time_secs,uptime],['Uptime'],['Time (sec)','Uptime'],'3')
+plotGraph(sys.argv[3],[time_secs,users],['No. of Users'],['Time (sec)','No. of Users'],'4')
+plotGraph(sys.argv[3],[time_secs,total_process,running_process,sleeping_process,zombie_process],['Total Processes','Running Processes','Sleeping Processes','Zombie Processes'],['Time (sec)','No. of Processes'],'5')
+plotGraph(sys.argv[3],[time_secs,read_speed,write_speed],['Read Speed(kB/s)','Write Speed(kB/s)'],['Time (sec)','Disk Operations'],'6')
+plotGraph(sys.argv[3],[time_secs,up_speed,down_speed],['Up Speed(kB/s)','Down Speed(kB/s)'],['Time (sec)','Network Speed (kB/s)'],'7')
+plotGraph(sys.argv[3],[time_mins,average_load],['Average load(per min)'],['Time (sec)','Average Load'],'8')
+
 print "plotting graph..."
 hostname=socket.gethostname() 
 ip= urlopen('http://ip.42.pl/raw').read() #for ip
@@ -454,6 +317,6 @@ toaddr = dotenv.get("To")
 cc= dotenv.get("Cc")
 bcc= dotenv.get("Bcc")
 rcpt=[cc]  + [bcc]+ [toaddr]
-html_body=renderHtml(hostname, ip,cpu_usage_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg,load_avg)
+html_body=renderHtml(hostname, ip,cpu_usage_avg,load_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg)
 sendMail(sys.argv[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
 print "email sent!!!"
