@@ -49,7 +49,7 @@ def getProcessInfo():
 dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
 now=datetime.datetime.now()
-date=now.strftime("%d-%m-%y")
+date=now.strftime("%d %b %Y")
 
 f=open(dir+'/data/'+date+'_per_sec.txt',"a" )
 fs=open(dir+'/data/'+date+'_per_min.txt',"a" )
@@ -65,10 +65,10 @@ while  1 :
 	load_avg=os.getloadavg()
 	proc=getProcessInfo()
 	if (time_tuple[2] == "00"):
-		fs.write(str(time_tuple[4])+" "+str(load_avg[0])+"\n")
+		fs.write(str(time_tuple[4])+" "+str(load_avg[0])+" \n")
 	netstats_before=psutil.net_io_counters(pernic=False)
 	diskstats_before=psutil.disk_io_counters()
-	print (str(time_tuple[0])+" "+str(time_tuple[1])+" "+str(time_tuple[2])+"\n")
+	print (str(time_tuple[0])+" "+str(time_tuple[1])+" "+str(time_tuple[2])+" \n")
 	time.sleep(1)
 	netstats_after=psutil.net_io_counters(pernic=False)
 	diskstats_after=psutil.disk_io_counters()
@@ -76,9 +76,9 @@ while  1 :
 	write_speed=float(diskstats_after[3]-diskstats_before[3])/1024
 	up_speed=float(netstats_after[0]-netstats_before[0])/1024
 	down_speed=float(netstats_after[1]-netstats_before[1])/1024
-	f.write(str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+" "+str(swap[3])+" "+str(uptime)+" "+str(len(users))+" "+str(proc[0])+" "+str(proc[2])+" "+str(proc[1])+" "+str(proc[3])+" "+str("{0:.2f}".format(read_speed))+" "+str("{0:.2f}".format(write_speed))+" "+str("{0:.2f}".format(up_speed))+" "+str("{0:.2f}".format(down_speed))+"\n")
+	f.write(str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+" "+str(swap[3])+" "+str(len(users))+" "+str(proc[0])+" "+str(proc[2])+" "+str(proc[1])+" "+str(proc[3])+" "+str("{0:.2f}".format(read_speed))+" "+str("{0:.2f}".format(write_speed))+" "+str("{0:.2f}".format(up_speed))+" "+str("{0:.2f}".format(down_speed))+" \n")
 	#break the loop at EOD
-	if (time_tuple[0] == "23") and (time_tuple[1] == "59") and (time_tuple[2] == "59"):
+	if (time_tuple[0] == "20") and (time_tuple[1] == "53") and (time_tuple[2] == "59"):
 		break
 	
 f.close()
