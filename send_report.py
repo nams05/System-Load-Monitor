@@ -80,8 +80,11 @@ def renderHtml(hostname, ip,*args):
 			}
 			img{
 				
-				border: 1px solid #ddd;
-			    width: 49.75%;
+				border-style: solid; 
+				border-color: #ddd;
+			    border-width:0.20%;
+			    width: 49%;
+			    margin-bottom:.80%
 			}
 
 
@@ -91,17 +94,18 @@ def renderHtml(hostname, ip,*args):
 	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ hostname+"<br>Public IP: "+ip+'''<br>Following table contains various system metrics:<br><br>
 			<table>
 
-				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU Utilization</th><th colspan="2">Memory Utilization</th><th rowspan="2">Uptime</th><th rowspan="2">Users</th><th colspan="4">No. of Processes</th><th colspan="2">Disk Speed</th><th colspan="2">Network Speed</th></tr>
+				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU Utilization</th><th colspan="2">Memory Utilization</th><th rowspan="2">Users</th><th colspan="4">No. of Processes</th><th colspan="2">Disk Speed</th><th colspan="2">Network Speed</th></tr>
 				<tr><th>CPU Usage (%)</th><th>Load Average</th><th>RAM (%) </th><th>Swap (%)</th><th>Total</th><th>Running</th><th>Sleeping</th><th>Zombie</th><th>Read Speed (kB/s)</th><th>Write Speed (kB/s)</th><th>Up Speed (kB/s)</th><th>Down Speed (kB/s)</th></tr>
 			'''
 	for i in range(0,24):
 		if (args[6][i]==0 ):
 			continue
-		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(args[0][i])+"\">"+str("{0:.2f}".format(args[0][i]))+"</td><td style=\"background-color:"+color(args[1][i]*20)+"\">"+str("{0:.2f}".format(args[1][i]))+"</td><td style=\"background-color:"+color(args[2][i])+"\">"+str("{0:.2f}".format(args[2][i]))+"</td><td style=\"background-color:"+color(args[3][i])+"\">"+str("{0:.2f}".format(args[3][i]))+"</td><td style=\"background-color:"+color(args[4][i]/1000)+"\">"+str(args[4][i])+"</td><td style=\"background-color:"+color(args[5][i]*7.5)+"\">"+str(args[5][i])+"</td><td style=\"background-color:"+color(args[6][i]/args[6][i]*100)+"\">"+str(args[6][i])+"</td><td style=\"background-color:"+color(args[7][i]/args[6][i]*100)+"\">"+str(args[7][i])+"</td><td style=\"background-color:"+color(args[8][i]/args[6][i]*100)+"\">"+str(args[8][i])+"</td><td style=\"background-color:"+color(args[9][i]/args[6][i]*100)+"\">"+str(args[9][i])+"</td><td style=\"background-color:"+color(args[10][i]*10)+"\">"+str("{0:.2f}".format(args[10][i]))+"</td><td style=\"background-color:"+color(args[11][i]*10)+"\">"+str("{0:.2f}".format(args[11][i]))+"</td><td style=\"background-color:"+color(args[12][i]*10)+"\">"+str("{0:.2f}".format(args[12][i]))+"</td><td style=\"background-color:"+color(args[13][i]*10)+"\">"+str("{0:.2f}".format(args[13][i]))+"</td></tr>"
+		html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(args[0][i])+"\">"+str("{0:.2f}".format(args[0][i]))+"</td><td style=\"background-color:"+color(args[1][i]*20)+"\">"+str("{0:.2f}".format(args[1][i]))+"</td><td style=\"background-color:"+color(args[2][i])+"\">"+str("{0:.2f}".format(args[2][i]))+"</td><td style=\"background-color:"+color(args[3][i])+"\">"+str("{0:.2f}".format(args[3][i]))+"</td><td style=\"background-color:"+color(args[4][i]*7.5)+"\">"+str(args[4][i])+"</td><td style=\"background-color:"+color(args[5][i]/args[5][i]*100)+"\">"+str(args[5][i])+"</td><td style=\"background-color:"+color(args[6][i]/args[5][i]*100)+"\">"+str(args[6][i])+"</td><td style=\"background-color:"+color(args[7][i]/args[5][i]*100)+"\">"+str(args[7][i])+"</td><td style=\"background-color:"+color(args[8][i]/args[5][i]*100)+"\">"+str(args[8][i])+"</td><td style=\"background-color:"+color(args[9][i]*10)+"\">"+str("{0:.2f}".format(args[9][i]))+"</td><td style=\"background-color:"+color(args[10][i]*10)+"\">"+str("{0:.2f}".format(args[10][i]))+"</td><td style=\"background-color:"+color(args[11][i]*10)+"\">"+str("{0:.2f}".format(args[11][i]))+"</td><td style=\"background-color:"+color(args[12][i]*10)+"\">"+str("{0:.2f}".format(args[12][i]))+"</td></tr>"
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
-def plotGraph(date,*args):
+def plotGraph(date,*args): 
+#args[0]: list of lists to be plotted ; args[1]:list of lists of label of each plot; args[2]:list of list of axis labels ; args[3]:graph no
 	#plotting the graph using the lists
 	gr_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
 	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
@@ -134,7 +138,6 @@ def readFile(filename):
 	cpu_usage=[]
 	ram_usage=[]
 	swap=[]
-	uptime=[]
 	users=[]
 	total_process=[]
 	running_process=[]
@@ -148,37 +151,35 @@ def readFile(filename):
 
 	with open(filename) as f:
 		for word in f.read().split():
-			if (i%14==0):
+			if (i%13==0):
 				time_secs.append(int(word))
-			elif (i%14==1):
+			elif (i%13==1):
 				cpu_usage.append(float(word))
-			elif (i%14==2):
+			elif (i%13==2):
 				ram_usage.append(float(word))
-			elif (i%14==3):
+			elif (i%13==3):
 				swap.append(float(word))
-			elif (i%14==4):
-				uptime.append(int(word))
-			elif (i%14==5):
+			elif (i%13==4):
 				users.append(int(word))
-			elif (i%14==6):
+			elif (i%13==5):
 				total_process.append(int(word))
-			elif (i%14==7):
+			elif (i%13==6):
 				running_process.append(int(word))
-			elif (i%14==8):
+			elif (i%13==7):
 				sleeping_process.append(int(word))
-			elif (i%14==9):
+			elif (i%13==8):
 				zombie_process.append(int(word))
-			elif (i%14==10):
+			elif (i%13==9):
 				read_speed.append(float(word))
-			elif (i%14==11):
+			elif (i%13==10):
 				write_speed.append(float(word))
-			elif (i%14==12):
+			elif (i%13==11):
 				up_speed.append(float(word))
-			elif (i%14==13):
+			elif (i%13==12):
 				down_speed.append(float(word))
 			i=i+1
 
-	return [time_secs,cpu_usage,ram_usage,swap,uptime,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed]
+	return [time_secs,cpu_usage,ram_usage,swap,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed]
 
 #read file2
 def readFile2(filename):
@@ -227,7 +228,7 @@ def sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	html_part=MIMEText(html_body,'html')
 	msg.attach(html_part)
 
-	for i in range(1,9):
+	for i in range(1,8):
 		img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
 		image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
 		image.add_header('Content-ID', '<image'+str(i)+'>')
@@ -270,16 +271,15 @@ cpu_usage=metrics[1]
 average_load=metrics2[1]
 ram_usage=metrics[2]
 swap=metrics[3]
-uptime=metrics[4]
-users=metrics[5]
-total_process=metrics[6]
-running_process=metrics[7]
-sleeping_process=metrics[8]
-zombie_process=metrics[9]
-read_speed=metrics[10]
-write_speed=metrics[11]
-up_speed=metrics[12]
-down_speed=metrics[13]
+users=metrics[4]
+total_process=metrics[5]
+running_process=metrics[6]
+sleeping_process=metrics[7]
+zombie_process=metrics[8]
+read_speed=metrics[9]
+write_speed=metrics[10]
+up_speed=metrics[11]
+down_speed=metrics[12]
 
 #time in mins/secs is converted to hours
 
@@ -293,7 +293,6 @@ cpu_usage_avg=calculateAvg(hr,cpu_usage)
 load_avg=calculateAvg(hr2,average_load)
 ram_usage_avg=calculateAvg(hr,ram_usage)
 swap_avg=calculateAvg(hr,swap)
-uptime_avg=calculateAvg(hr,uptime)
 users_avg=calculateAvg(hr,users)
 total_process_avg=calculateAvg(hr,total_process)
 running_process_avg=calculateAvg(hr,running_process)
@@ -307,12 +306,11 @@ down_speed_avg=calculateAvg(hr,down_speed)
 #plotting all graphs
 plotGraph(sys.argv[3],[time_secs,cpu_usage],['CPU Usage(%)'],['Time (sec)','CPU(%)'],'1')
 plotGraph(sys.argv[3],[time_secs,ram_usage,swap],['RAM Usage(%)','Swap Memory(%)'],['Time (sec)','Memory(%)'],'2')
-plotGraph(sys.argv[3],[time_secs,uptime],['Uptime'],['Time (sec)','Uptime'],'3')
-plotGraph(sys.argv[3],[time_secs,users],['No. of Users'],['Time (sec)','No. of Users'],'4')
-plotGraph(sys.argv[3],[time_secs,total_process,running_process,sleeping_process,zombie_process],['Total Processes','Running Processes','Sleeping Processes','Zombie Processes'],['Time (sec)','No. of Processes'],'5')
-plotGraph(sys.argv[3],[time_secs,read_speed,write_speed],['Read Speed(kB/s)','Write Speed(kB/s)'],['Time (sec)','Disk Operations'],'6')
-plotGraph(sys.argv[3],[time_secs,up_speed,down_speed],['Up Speed(kB/s)','Down Speed(kB/s)'],['Time (sec)','Network Speed (kB/s)'],'7')
-plotGraph(sys.argv[3],[time_mins,average_load],['Average load(per min)'],['Time (sec)','Average Load'],'8')
+plotGraph(sys.argv[3],[time_secs,users],['No. of Users'],['Time (sec)','No. of Users'],'3')
+plotGraph(sys.argv[3],[time_secs,total_process,running_process,sleeping_process,zombie_process],['Total Processes','Running Processes','Sleeping Processes','Zombie Processes'],['Time (sec)','No. of Processes'],'4')
+plotGraph(sys.argv[3],[time_secs,read_speed,write_speed],['Read Speed(kB/s)','Write Speed(kB/s)'],['Time (sec)','Disk Operations'],'5')
+plotGraph(sys.argv[3],[time_secs,up_speed,down_speed],['Up Speed(kB/s)','Down Speed(kB/s)'],['Time (sec)','Network Speed (kB/s)'],'6')
+plotGraph(sys.argv[3],[time_mins,average_load],['Average load(per min)'],['Time (sec)','Average Load'],'7')
 
 print "plotting graph..."
 hostname=socket.gethostname() 
@@ -323,6 +321,8 @@ toaddr = dotenv.get("To")
 cc= dotenv.get("Cc")
 bcc= dotenv.get("Bcc")
 rcpt=[cc]  + [bcc]+ [toaddr]
-html_body=renderHtml(hostname, ip,cpu_usage_avg,load_avg,ram_usage_avg,swap_avg,uptime_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg)
+html_body=renderHtml(hostname, ip,cpu_usage_avg,load_avg,ram_usage_avg,swap_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg)
 sendMail(sys.argv[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
 print "email sent!!!"
+
+print time.ctime(os.stat(inspect.getfile(inspect.currentframe())).st_atime)
