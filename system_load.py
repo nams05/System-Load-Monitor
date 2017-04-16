@@ -6,28 +6,34 @@ import datetime
 import time
 import inspect
 
-#calculate cpu usage
+
+def getEpocTime():
+	return int(time.time())
+
+def getDate()
+	now=datetime.datetime.now()
+	date=now.strftime("%d %b %Y")
+	return date
+
 def getCpuUsage():
 	cpu=psutil.cpu_times()									
 	total=0
 	for i in cpu:
 		total+=i
 	cpu_usage=100-((cpu[3]/total)*100)
-	return "{0:.2f}".format(cpu_usage)
+	load_avg=os.getloadavg()
+	return "{0:.2f}".format(cpu_usage),load_avg
 
-def getTime():
-	now=datetime.datetime.now()	
-	time_tuple=[]
-	time_tuple.append(now.strftime("%H")) #time_tuple[0]=hours
-	time_tuple.append(now.strftime("%M")) #time_tuple[1]=mins
-	time_tuple.append(now.strftime("%S")) #time_tuple[2]=secs
-	time_tuple.append(((int(time_tuple[0])*60)+(int(time_tuple[1])))*60 +int(time_tuple[2])) #time_tuple[3]=total secs
-	time_tuple.append((int(time_tuple[0])*60)+int(time_tuple[1])) #time_tuple[4]=total mins
-	return time_tuple
+def getMemoryUsage():
+	VM=psutil.virtual_memory()
+	return VM[2]
 
-def getProcessInfo():
+def getSwapUsage():
+	swap=psutil.swap_memory()
+	return swap[3]
+
+def getRunningProcess():
 	total_process=0
-	sleeping_process=0
 	zombie_process=0
 	running_process=0
 	for proc in psutil.process_iter():
@@ -37,35 +43,43 @@ def getProcessInfo():
 	        pass
 	    else:
 	        total_process+=1
-	        if (pinfo['status'] == "sleeping"):
-	        	sleeping_process+=1
-	        elif (pinfo['status'] == "running"):
+	        if (pinfo['status'] == "running"):
 	        	running_process+=1
 	        elif (pinfo['status']=="zombie"):
 	        	zombie_process+=1
 
-	return [total_process,sleeping_process,running_process,zombie_process]
+	return total_process,running_process,zombie_process
+
+
+def getDiskUsage():
+	diskstats=psutil.disk_io_counters()
+	return diskstats
+
+def getNetworkUsage():
+	netstats=psutil.net_io_counters(pernic=False)
+	return netstats
+
+def getLoggedInUsers():
+	users=psutil.users()
+	usernames=[]
+	for i in range(0,len(users)):
+		usernames.append(users[i][0])
+	return usernames
+
 
 dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
 
-now=datetime.datetime.now()
-date=now.strftime("%d %b %Y")
-
-f=open(dir+'/data/'+date+'_per_sec.txt',"a" )
-fs=open(dir+'/data/'+date+'_per_min.txt',"a" )
-
 while  1 :
-	time_tuple=getTime()
-	cpu_usage=getCpuUsage()
-	#calculate RAM usage
-	VM=psutil.virtual_memory()
+	date_now=getDate()
+	time.sleep(1)
+	date_later=getDate()
+	if(date_now ==date_later)
+		f=open(dir+'/data/'+date_now,"a" )
+	else
+		f=open(dir+'/data/'+date_later,"a" )
 	swap=psutil.swap_memory()
 	uptime=int(time.time() - psutil.boot_time())
-	users=psutil.users()
-	load_avg=os.getloadavg()
 	proc=getProcessInfo()
-	if (time_tuple[2] == "00"):
-		fs.write(str(time_tuple[4])+" "+str(load_avg[0])+" \n")
 	netstats_before=psutil.net_io_counters(pernic=False)
 	diskstats_before=psutil.disk_io_counters()
 	print (str(time_tuple[0])+" "+str(time_tuple[1])+" "+str(time_tuple[2])+" \n")
@@ -78,15 +92,7 @@ while  1 :
 	down_speed=float(netstats_after[1]-netstats_before[1])/1024
 	f.write(str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+" "+str(swap[3])+" "+str(len(users))+" "+str(proc[0])+" "+str(proc[2])+" "+str(proc[1])+" "+str(proc[3])+" "+str("{0:.2f}".format(read_speed))+" "+str("{0:.2f}".format(write_speed))+" "+str("{0:.2f}".format(up_speed))+" "+str("{0:.2f}".format(down_speed))+" \n")
 	#break the loop at EOD
-	if (time_tuple[0] == "20") and (time_tuple[1] == "53") and (time_tuple[2] == "59"):
+	if (time_tuple[0] == "23") and (time_tuple[1] == "59") and (time_tuple[2] == "59"):
 		break
 	
 f.close()
-fs.close()
-# call the send_report script with 2 argument 
-sys.argv=['send_report.py',dir+"/data/"+date+"_per_sec.txt",dir+"/data/"+date+"_per_min.txt",date]
-execfile("send_report.py")
-time.sleep(1)
-print "calling system_load.py"
-#call this script again
-execfile("system_load.py")
