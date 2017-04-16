@@ -6,33 +6,37 @@ import datetime
 import time
 import inspect
 
+# Global variables
+diskstats_before=psutil.disk_io_counters()
+netstats_before=psutil.net_io_counters(pernic=False)
 
-def getEpocTime():
+## Functions for collecting System Metrics ##
+def get_epoch_time():
 	return int(time.time())
 
-def getDate()
+def get_date():
 	now=datetime.datetime.now()
 	date=now.strftime("%d %b %Y")
 	return date
 
-def getCpuUsage():
-	cpu=psutil.cpu_times()									
+def get_cpu_usage():
+	cpu=psutil.cpu_times()
 	total=0
 	for i in cpu:
 		total+=i
 	cpu_usage=100-((cpu[3]/total)*100)
 	load_avg=os.getloadavg()
-	return "{0:.2f}".format(cpu_usage),load_avg
+	return "{0:.2f}".format(cpu_usage),load_avg[0]
 
-def getMemoryUsage():
+def get_memory_usage():
 	VM=psutil.virtual_memory()
 	return VM[2]
 
-def getSwapUsage():
+def get_swap_usage():
 	swap=psutil.swap_memory()
 	return swap[3]
 
-def getRunningProcess():
+def get_running_process():
 	total_process=0
 	zombie_process=0
 	running_process=0
@@ -50,49 +54,68 @@ def getRunningProcess():
 
 	return total_process,running_process,zombie_process
 
+def get_disk_usage():
+	diskstats_after=psutil.disk_io_counters()
+	global diskstats_before
+	read_speed=float(diskstats_after[2]-diskstats_before[2])/1048576
+	write_speed=float(diskstats_after[3]-diskstats_before[3])/1048576
+	diskstats_before=diskstats_after
+	return "{0:.2f}".format(read_speed),"{0:.2f}".format(write_speed)
 
-def getDiskUsage():
-	diskstats=psutil.disk_io_counters()
-	return diskstats
 
-def getNetworkUsage():
-	netstats=psutil.net_io_counters(pernic=False)
-	return netstats
+def get_network_usage():
+	netstats_after=psutil.net_io_counters(pernic=False)
+	global netstats_before
+	egress_speed=float(netstats_after[0]-netstats_before[0])/1048576
+	ingress_speed=float(netstats_after[1]-netstats_before[1])/1048576
+	netstats_before=netstats_after
+	return "{0:.2f}".format(egress_speed),"{0:.2f}".format(ingress_speed)
 
-def getLoggedInUsers():
+def get_logged_in_users():
 	users=psutil.users()
 	usernames=[]
 	for i in range(0,len(users)):
 		usernames.append(users[i][0])
 	return usernames
 
+def get_directory():
+	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) 
 
-dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
+if __name__ == '__main__':
+	while  1 :
+		## *get system statistics
+		date=get_date()
+		epoch_time=get_epoch_time()
+		cpu_usage,cpu_load_avg=get_cpu_usage()
+		memory=get_memory_usage()
+		swap=get_swap_usage()
+		total_process,running_process,zombie_process=get_running_process()
+		read_speed,write_speed=get_disk_usage()
+		ingress_speed,egress_speed=get_network_usage()
+		usernames=get_logged_in_users()
 
-while  1 :
-	date_now=getDate()
-	time.sleep(1)
-	date_later=getDate()
-	if(date_now ==date_later)
-		f=open(dir+'/data/'+date_now,"a" )
-	else
-		f=open(dir+'/data/'+date_later,"a" )
-	swap=psutil.swap_memory()
-	uptime=int(time.time() - psutil.boot_time())
-	proc=getProcessInfo()
-	netstats_before=psutil.net_io_counters(pernic=False)
-	diskstats_before=psutil.disk_io_counters()
-	print (str(time_tuple[0])+" "+str(time_tuple[1])+" "+str(time_tuple[2])+" \n")
-	time.sleep(1)
-	netstats_after=psutil.net_io_counters(pernic=False)
-	diskstats_after=psutil.disk_io_counters()
-	read_speed=float(diskstats_after[2]-diskstats_before[2])/1024
-	write_speed=float(diskstats_after[3]-diskstats_before[3])/1024
-	up_speed=float(netstats_after[0]-netstats_before[0])/1024
-	down_speed=float(netstats_after[1]-netstats_before[1])/1024
-	f.write(str(time_tuple[3])+" "+str(cpu_usage)+" "+str(VM[2])+" "+str(swap[3])+" "+str(len(users))+" "+str(proc[0])+" "+str(proc[2])+" "+str(proc[1])+" "+str(proc[3])+" "+str("{0:.2f}".format(read_speed))+" "+str("{0:.2f}".format(write_speed))+" "+str("{0:.2f}".format(up_speed))+" "+str("{0:.2f}".format(down_speed))+" \n")
-	#break the loop at EOD
-	if (time_tuple[0] == "23") and (time_tuple[1] == "59") and (time_tuple[2] == "59"):
-		break
-	
-f.close()
+		## store it in a dictionary
+		system_stats={
+		'epoch':epoch_time,
+		'cpu usage':cpu_usage,
+		'cpu load avg':cpu_load_avg,
+		'memory':memory,
+		'swap':swap,
+		'total process':total_process,
+		'running process':running_process,
+		'zombie process':zombie_process,
+		'read speed':read_speed,
+		'write speed':write_speed,
+		'egress speed':egress_speed,
+		'ingress speed':ingress_speed,
+		'usernames':usernames
+		}
+
+		with open(get_directory()+'/data/'+date+'.txt','a' ) as f:
+			f.write(str(system_stats['epoch'])+" "+str(system_stats['cpu usage'])+" "+str(system_stats['cpu load avg'])+" "+str(system_stats['memory'])+" "+str(system_stats['swap'])+" "+str(system_stats['total process'])+" "+str(system_stats['running process'])+" "+str(system_stats['zombie process'])+" "+str(system_stats['read speed'])+" "+str(system_stats['write speed'])+" "+str(system_stats['egress speed'])+" "+str(system_stats['ingress speed'])+" "+str(system_stats['usernames'])+"\n")
+		print system_stats['usernames']
+		time.sleep(1)
+		
+		
+		
+		
