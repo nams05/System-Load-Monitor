@@ -17,7 +17,7 @@ import socket # for hostname
 from urllib2 import urlopen # to get IP address
 import ast #str to appropriate datatype
 
-map_colno_to_colname_in_datafile={
+map_colno_to_colname_datafile={
 	0:'epoch',
 	1:'cpu usage',
 	2:'cpu load avg',
@@ -36,6 +36,12 @@ map_colno_to_colname_in_datafile={
 def get_directory():
 	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+def get_ip():
+	return urlopen('http://ip.42.pl/raw').read() #for ip
+
+def get_hostname():
+	return socket.gethostname()
+
 #function to define color code of each cell
 def color(attribute_percent):
 	if(attribute_percent<=30):
@@ -50,19 +56,22 @@ def get_date_from_epoch(epoch):
 	return time.strftime("%d %b %Y",tm_struct)
 
 def plot_graph(column_number_list,epoch_start,epoch_end,attribute_label,axis_label,graph_no):
-#read file according to column number , segregate into lists
+
 	date=get_date_from_epoch(epoch_start)
 	input_list=[[] for i in range(len(column_number_list))]
+
+	## read file according to column number , segregate into lists
 	with open(get_directory()+'/data/'+date+'.txt') as f:
 		lines_read=f.readlines()
 		for each_line in lines_read:
 			modified_line=each_line.rstrip('\n')
 			new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple accoring to syntax
+	
 			# segregate into lists
 			for i in range(0,len(column_number_list)):
 				input_list[i].append(new_tuple[column_number_list[i]])
 
-	#plot graph using input_list
+	## plot graph using input_list
 	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
 	plt.close('all')
 	#set size of the graph image
@@ -84,7 +93,6 @@ def plot_graph(column_number_list,epoch_start,epoch_end,attribute_label,axis_lab
 	plt.grid(True)
 	plt.savefig(get_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
 
-
 #used in calculateAVg()
 def type_of(attribute):
 	if type(attribute)==float:
@@ -92,11 +100,31 @@ def type_of(attribute):
 	elif type(attribute)==int:
 		return 'i'
 
+def calculate_average(column_number,epoch_start, epoch_end): # avg of the interval epoch_end - epoch_start
+	#intialize local variable
+	count=0
+	attribute_avg=0
+
+	#read file
+	with open(get_directory()+'/data/'+date+'.txt') as f:
+		lines_read=f.readlines()
+		for each_line in lines_read:
+			modified_line=each_line.rstrip('\n')
+			new_tuple=ast.literal_eval(modified_line) 
+			if (new_tuple[0]>=epoch_start) and (new_tuple[0]<=epoch_end):
+				attribute_avg+=new_tuple[column_number]
+				count+=1
+
+	attribute_avg=float(attribute_avg)/count
+	return "{0:.2f}".format(attribute_avg)
+
 #produce html code for email body
-def renderHtml(hostname, ip,*args):
+def generate_report_table_html():
+	#current time
 	now=datetime.datetime.now()
 	mail_time=now.strftime("%I:%M:%S %p") # time in 12hour format
-	date=now.strftime("%d %b %Y") # eg 03 Apr 2017
+
+	date=get_date_from_epoch(epoch_start) # eg 03 Apr 2017
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -150,27 +178,10 @@ def renderHtml(hostname, ip,*args):
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
-	
-def calculate_average(hour,attribute): # avg of each hour
-	attribute_avg=array.array(typeOf(attribute[0]),(0,)*24)
-	count=array.array('i',(0,)*24)
-	attribute_avg[hour[0]]+=attribute[0]
-	count[hour[0]]+=1
-	for i in range(1,len(hour)):
-		attribute_avg[hour[i]]+=attribute[i]
-		count[hour[i]]+=1
-	for i in range(0,24):
-		if(count[i]==0):
-			continue
-		attribute_avg[i]=attribute_avg[i]/count[i]
-	return attribute_avg.tolist()   #return the array as a list
 
+def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 
-def sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
-
-	hostname=socket.gethostname() 
-	ip= urlopen('http://ip.42.pl/raw').read() #for ip
-	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
+	dir= get_directory()
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
 	msg['To'] = toaddr
@@ -182,7 +193,7 @@ def sendMail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	html_part=MIMEText(html_body,'html')
 	msg.attach(html_part)
 
-	for i in range(1,8):
+	for i in range(1,7):
 		img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
 		image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
 		image.add_header('Content-ID', '<image'+str(i)+'>')
