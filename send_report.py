@@ -14,33 +14,79 @@ import dotenv #to use .env file
 import array
 import inspect #  to get working directory
 import socket # for hostname
-from urllib2 import urlopen # to get IP address 
+from urllib2 import urlopen # to get IP address
+import ast #str to appropriate datatype
+
+map_colno_to_colname_in_datafile={
+	0:'epoch',
+	1:'cpu usage',
+	2:'cpu load avg',
+	3:'memory',
+	4:'swap',
+	5:'total process',
+	6:'running process',
+	7:'zombie process',
+	8:'read speed',
+	9:'write speed',
+	10:'egress speed',
+	11:'ingress speed',
+	12:'usernames'
+}
+
+def get_directory():
+	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 #function to define color code of each cell
-def color(cpu):
-	if(cpu<=10):
-		return "#FDB22B"
-	elif(cpu<=20):
-		return "#F00088"
-	elif(cpu<=30):
-		return "#2A58C3"
-	elif(cpu<=40):
-		return "#FF7C03"
-	elif(cpu<=50):
-		return "#8408BA"
-	elif(cpu<=60):
-		return "#B2C300"
-	elif(cpu<=70):
-		return "#94D301"
-	elif(cpu<=80):
-		return "#01A5AD"
-	elif(cpu<=90):
-		return "#AEB18C"
+def color(attribute_percent):
+	if(attribute_percent<=30):
+		return "#099E44"#green 
+	elif(attribute_percent<=70):
+		return "#0198AD"#blue
 	else:
-		return "#01A5AD"
+		return "#CB202D"#red
+
+def get_date_from_epoch(epoch):
+	tm_struct=time.localtime(epoch)
+	return time.strftime("%d %b %Y",tm_struct)
+
+def plot_graph(column_number_list,epoch_start,epoch_end,attribute_label,axis_label,graph_no):
+#read file according to column number , segregate into lists
+	date=get_date_from_epoch(epoch_start)
+	input_list=[[] for i in range(len(column_number_list))]
+	with open(get_directory()+'/data/'+date+'.txt') as f:
+		lines_read=f.readlines()
+		for each_line in lines_read:
+			modified_line=each_line.rstrip('\n')
+			new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple accoring to syntax
+			# segregate into lists
+			for i in range(0,len(column_number_list)):
+				input_list[i].append(new_tuple[column_number_list[i]])
+
+	#plot graph using input_list
+	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
+	plt.close('all')
+	#set size of the graph image
+	fig_size = plt.rcParams["figure.figsize"]
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	graph_name=[]
+	for i in range(1,len(input_list)):
+		graph_name.append(plt.plot(input_list[0],input_list[i],'r',label=attribute_label[i-1])) # plotting each attribute against time
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	for i in range(0,len(graph_name)):
+		plt.setp(graph_name[i],color=graphline_color[i], linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel(axis_label[0])
+	plt.ylabel(axis_label[1])
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(get_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
+
 
 #used in calculateAVg()
-def typeOf(attribute):
+def type_of(attribute):
 	if type(attribute)==float:
 		return 'f'
 	elif type(attribute)==int:
@@ -104,100 +150,8 @@ def renderHtml(hostname, ip,*args):
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"><img src=\"cid:image7\" style=\"float:left\"><img src=\"cid:image8\" style=\"float:right\"></body></html>"
 	return html
 
-def plotGraph(date,*args): 
-#args[0]: list of lists to be plotted ; args[1]:list of lists of label of each plot; args[2]:list of list of axis labels ; args[3]:graph no
-	#plotting the graph using the lists
-	gr_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
-	dir= os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
-	plt.close('all')
-	#set size of the graph image
-	fig_size = plt.rcParams["figure.figsize"] 
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	gr_name=[]
-	for i in range(1,len(args[0])):
-		gr_name.append(plt.plot(args[0][0],args[0][i],'r',label=args[1][i-1])) # plotting each attribute against time
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	for i in range(0,len(gr_name)):
-		plt.setp(gr_name[i],color=gr_color[i], linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel(args[2][0])
-	plt.ylabel(args[2][1])
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(dir+'/graph/'+date+'_'+args[3]+'_graph.jpg')
-
 	
-
-#reading the file and segmenting the data into lists
-def readFile(filename):
-	i=0
-	time_secs=[]
-	cpu_usage=[]
-	ram_usage=[]
-	swap=[]
-	users=[]
-	total_process=[]
-	running_process=[]
-	sleeping_process=[]
-	zombie_process=[]
-	read_speed=[]
-	write_speed=[]
-	up_speed=[]
-	down_speed=[]
-	hr=[]
-
-	with open(filename) as f:
-		for word in f.read().split():
-			if (i%13==0):
-				time_secs.append(int(word))
-			elif (i%13==1):
-				cpu_usage.append(float(word))
-			elif (i%13==2):
-				ram_usage.append(float(word))
-			elif (i%13==3):
-				swap.append(float(word))
-			elif (i%13==4):
-				users.append(int(word))
-			elif (i%13==5):
-				total_process.append(int(word))
-			elif (i%13==6):
-				running_process.append(int(word))
-			elif (i%13==7):
-				sleeping_process.append(int(word))
-			elif (i%13==8):
-				zombie_process.append(int(word))
-			elif (i%13==9):
-				read_speed.append(float(word))
-			elif (i%13==10):
-				write_speed.append(float(word))
-			elif (i%13==11):
-				up_speed.append(float(word))
-			elif (i%13==12):
-				down_speed.append(float(word))
-			i=i+1
-
-	return [time_secs,cpu_usage,ram_usage,swap,users,total_process,running_process,sleeping_process,zombie_process,read_speed,write_speed,up_speed,down_speed]
-
-#read file2
-def readFile2(filename):
-	j=0
-	hr2=[]
-	time_mins=[]
-	average_load=[]
-	with open(filename) as fs:
-		for word in fs.read().split():
-			if(j%2==0):
-				time_mins.append(int(word))
-			elif(j%2==1):
-				average_load.append(float(word))
-			j+=1
-	return [time_mins,average_load]
-
-
-def calculateAvg(hour,attribute): # avg of each hour
+def calculate_average(hour,attribute): # avg of each hour
 	attribute_avg=array.array(typeOf(attribute[0]),(0,)*24)
 	count=array.array('i',(0,)*24)
 	attribute_avg[hour[0]]+=attribute[0]
@@ -324,5 +278,3 @@ rcpt=[cc]  + [bcc]+ [toaddr]
 html_body=renderHtml(hostname, ip,cpu_usage_avg,load_avg,ram_usage_avg,swap_avg,users_avg,total_process_avg,running_process_avg,sleeping_process_avg,zombie_process_avg,read_speed_avg,write_speed_avg,up_speed_avg,down_speed_avg)
 sendMail(sys.argv[3],fromaddr,toaddr,cc,bcc,rcpt,html_body)
 print "email sent!!!"
-
-print time.ctime(os.stat(inspect.getfile(inspect.currentframe())).st_atime)
