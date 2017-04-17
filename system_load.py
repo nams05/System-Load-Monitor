@@ -10,14 +10,18 @@ import inspect
 diskstats_before=psutil.disk_io_counters()
 netstats_before=psutil.net_io_counters(pernic=False)
 
-## Functions for collecting System Metrics ##
-def get_epoch_time():
-	return int(time.time())
+
+def get_directory():
+	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) 
 
 def get_date():
 	now=datetime.datetime.now()
 	date=now.strftime("%d %b %Y")
 	return date
+
+## Functions for collecting System Metrics ##
+def get_epoch_time():
+	return int(time.time())
 
 def get_cpu_usage():
 	cpu=psutil.cpu_times()
@@ -78,9 +82,6 @@ def get_logged_in_users():
 		usernames.append(users[i][0])
 	return usernames
 
-def get_directory():
-	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) 
-
 if __name__ == '__main__':
 	while  1 :
 		## *get system statistics
@@ -115,7 +116,3 @@ if __name__ == '__main__':
 			f.write(str(system_stats['epoch'])+" "+str(system_stats['cpu usage'])+" "+str(system_stats['cpu load avg'])+" "+str(system_stats['memory'])+" "+str(system_stats['swap'])+" "+str(system_stats['total process'])+" "+str(system_stats['running process'])+" "+str(system_stats['zombie process'])+" "+str(system_stats['read speed'])+" "+str(system_stats['write speed'])+" "+str(system_stats['egress speed'])+" "+str(system_stats['ingress speed'])+" "+str(system_stats['usernames'])+"\n")
 		print system_stats['usernames']
 		time.sleep(1)
-		
-		
-		
-		
