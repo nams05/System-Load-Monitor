@@ -14,8 +14,8 @@ from urllib2 import urlopen # to get IP address
 import ast #str to appropriate datatype
 import psutil
 
-map_colno_to_colname_datafile={
-	0:'epoch',
+column_index={
+	0:'timestamp',
 	1:'cpu usage',
 	2:'cpu load avg',
 	3:'memory',
@@ -38,31 +38,31 @@ def get_total_memory():
 	tots_memory=psutil.virtual_memory()
 	return tots_memory[0]/1048576
 
-def get_date_from_epoch(epoch):
-	tm_struct=time.localtime(epoch)
+def get_date_from_timestamp(timestamp): 
+	tm_struct=time.localtime(timestamp)
 	return time.strftime("%d %b %Y",tm_struct)
 
-def get_epoch_for_00hr(epoch):
-	date=get_date_from_epoch(epoch) 
+def get_timestamp_for_00hr(timestamp):
+	date=get_date_from_timestamp(timestamp) 
 	tm_struct=time.strptime(date+" 00:00:00","%d %b %Y %H:%M:%S")
-	epoch_at_00hr=time.mktime(tm_struct)
-	return int(epoch_at_00hr)
+	timestamp_at_00hr=time.mktime(tm_struct)
+	return int(timestamp_at_00hr)
 
-def get_epoch_for_next_hour(epoch):
-	return int(epoch+3600)
+def get_timestamp_for_next_hour(timestamp):
+	return int(timestamp+3600)
 
-def get_epoch_of_each_hour(epoch):
-	epoch_of_each_hour=[get_epoch_for_00hr(epoch)]
+def get_timestamp_of_each_hour(timestamp):
+	timestamp_of_each_hour=[get_timestamp_for_00hr(timestamp)]
 	for i in range(1,24):
-		epoch_of_each_hour.append(get_epoch_for_next_hour(epoch_of_each_hour[i-1]))
-	return epoch_of_each_hour
+		timestamp_of_each_hour.append(get_timestamp_for_next_hour(timestamp_of_each_hour[i-1]))
+	return timestamp_of_each_hour
 
-epoch_of_each_hour=get_epoch_of_each_hour(int(sys.argv[1]))
+timestamp_of_each_hour=get_timestamp_of_each_hour(int(sys.argv[1]))
 
-def get_directory():
+def get_current_directory():
 	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def get_ip():
+def get_public_ip():
 	return urlopen('http://ip.42.pl/raw').read() #for ip
 
 def get_hostname():
@@ -79,18 +79,18 @@ def color(attribute_percent):
 	else:
 		return "#FFB521"#yellow
 
-def calculate_average(column_number,epoch_start, epoch_end): # avg of the interval epoch_end - epoch_start
+def calculate_average(column_number, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
 	count=0
 	attribute_avg=0
 
 	#read file
-	with open(get_directory()+'/data/'+date+'.txt') as f:
+	with open(get_current_directory()+'/data/'+date+'.txt') as f:
 		lines_read=f.readlines()
 		for each_line in lines_read:
 			modified_line=each_line.rstrip('\n')
 			new_tuple=ast.literal_eval(modified_line) 
-			if (new_tuple[0]>=epoch_start) and (new_tuple[0]<=epoch_end):
+			if (new_tuple[0]>=timestamp_start) and (new_tuple[0]<=timestamp_end):
 				attribute_avg+=new_tuple[column_number]
 				count+=1
 	if count==0:
@@ -98,14 +98,14 @@ def calculate_average(column_number,epoch_start, epoch_end): # avg of the interv
 	attribute_avg=float(attribute_avg)/count
 	return "{0:.2f}".format(attribute_avg)
 
-def get_unique_users(epoch_start,epoch_end):
+def get_unique_users(timestamp_start, timestamp_end):
 	unique_users=set([])
-	with open(get_directory()+'/data/'+date+'.txt') as f:
+	with open(get_current_directory()+'/data/'+date+'.txt') as f:
 		lines_read=f.readlines()
 		for each_line in lines_read:
 			modified_line=each_line.rstrip('\n')
 			new_tuple=ast.literal_eval(modified_line)
-			if (new_tuple[0]>=epoch_start) and (new_tuple[0]<=epoch_end):
+			if (new_tuple[0]>=timestamp_start) and (new_tuple[0]<=timestamp_end):
 				for each_user in new_tuple[12]:
 					unique_users.add(each_user)
 
@@ -118,7 +118,7 @@ def get_unique_users(epoch_start,epoch_end):
 	return users.rstrip(",") #remove the trailing comma
 
 #produce html code for email body
-def generate_report_table_html(epoch_start,epoch_end):
+def generate_report_table_html(timestamp_start, timestamp_end):
 	#current time
 	now=time.time()
 	tm_struct=time.localtime(now)
@@ -126,7 +126,7 @@ def generate_report_table_html(epoch_start,epoch_end):
 	used_disk,free_disk=get_disk_usage()
 	total_memory=get_total_memory()
 
-	date=get_date_from_epoch(epoch_start) # eg 03 Apr 2017
+	date=get_date_from_timestamp(timestamp_start) # eg 03 Apr 2017
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
@@ -167,42 +167,43 @@ def generate_report_table_html(epoch_start,epoch_end):
 		</style>
 	</head>
 	<body>'''
-	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_ip()+'''<br>Following table contains various system metrics:<br><br>
+	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()+'''<br>Following table contains various system metrics:<br><br>
 			<table>
 
 				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
 				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
 			'''
 	
+
 	for i in range(0,24):
-		if (epoch_of_each_hour[i]>=epoch_start) and (epoch_of_each_hour[i]<=epoch_end):
-			start=epoch_of_each_hour[i]
-			end=get_epoch_for_next_hour(start)-1
-			cpu=float(calculate_average(1,start,end))
-			load=float(calculate_average(2,start,end))
-			memory=float(calculate_average(3,start,end))
-			swap=float(calculate_average(4,start,end))
-			total_process=int(float(calculate_average(5,start,end)))
-			running=int(float(calculate_average(6,start,end)))
-			zombie=int(float(calculate_average(7,start,end)))
-			read=float(calculate_average(8,start,end))
-			write=float(calculate_average(9,start,end))
-			egress=float(calculate_average(10,start,end))
-			ingress=float(calculate_average(11,start,end))
-			usernames=get_unique_users(epoch_start,epoch_end)
+		if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
+			hour_timestamp_start=timestamp_of_each_hour[i]
+			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
+			cpu=float(calculate_average(1, hour_timestamp_start, hour_timestamp_end))
+			load=float(calculate_average(2, hour_timestamp_start, hour_timestamp_end))
+			memory=float(calculate_average(3, hour_timestamp_start, hour_timestamp_end))
+			swap=float(calculate_average(4, hour_timestamp_start, hour_timestamp_end))
+			total_process=int(float(calculate_average(5, hour_timestamp_start, hour_timestamp_end)))
+			running=int(float(calculate_average(6, hour_timestamp_start, hour_timestamp_end)))
+			zombie=int(float(calculate_average(7, hour_timestamp_start, hour_timestamp_end)))
+			read=float(calculate_average(8, hour_timestamp_start, hour_timestamp_end))
+			write=float(calculate_average(9, hour_timestamp_start, hour_timestamp_end))
+			egress=float(calculate_average(10, hour_timestamp_start, hour_timestamp_end))
+			ingress=float(calculate_average(11, hour_timestamp_start, hour_timestamp_end))
+			usernames=get_unique_users(timestamp_start, timestamp_end)
 			if (total_process==0):
 				continue
 			html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	return html
 
-def plot_graph(column_number_list,epoch_start,epoch_end,attribute_label,axis_label,graph_no):
+def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,axis_label,graph_no):
 
-	date=get_date_from_epoch(epoch_start)
+	date=get_date_from_timestamp(timestamp_start)
 	input_list=[[] for i in range(len(column_number_list))]
 
 	## read file according to column number , segregate into lists
-	with open(get_directory()+'/data/'+date+'.txt') as f:
+	with open(get_current_directory()+'/data/'+date+'.txt') as f:
 		lines_read=f.readlines()
 		for each_line in lines_read:
 			modified_line=each_line.rstrip('\n')
@@ -232,12 +233,12 @@ def plot_graph(column_number_list,epoch_start,epoch_end,attribute_label,axis_lab
 	plt.ylabel(axis_label[1])
 	# plt.axis([0, 23,0,100],facecolor='b')
 	plt.grid(True)
-	plt.savefig(get_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
+	plt.savefig(get_current_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
 
 
 def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 
-	dir= get_directory()
+	dir= get_current_directory()
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
 	msg['To'] = toaddr
@@ -278,25 +279,27 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 
 if __name__=='__main__':
 	dotenv.load()
-	epoch_start=int(sys.argv[1])
-	epoch_end=int(sys.argv[2])
-	date=get_date_from_epoch(epoch_start)
+	timestamp_start=int(sys.argv[1])
+	timestamp_end=int(sys.argv[2])
+	date=get_date_from_timestamp(timestamp_start)
 
 	#plotting all graphs
-	plot_graph([0,1],epoch_start,epoch_end,['CPU Usage(%)'],['Epoch','CPU(%)'],'1')
-	plot_graph([0,2],epoch_start,epoch_end,['Average load(per min)'],['Epoch','Average Load'],'2')
-	plot_graph([0,3],epoch_start,epoch_end,['RAM Usage(%)'],['Epoch','Memory(%)'],'3')
-	plot_graph([0,5,6,7]  ,epoch_start,epoch_end,['Total Processes','Running Processes','Zombie Processes'],['Epoch','No. of Processes'],'4')
-	plot_graph([0,8,9]  ,epoch_start,epoch_end,['Read Speed(MB/s)','Write Speed(MB/s)'],['Epoch','Disk Operations'],'5')
-	plot_graph([0,10,11],epoch_start,epoch_end,['Up Speed(MB/s)','Down Speed(MB/s)'],['Epoch','Network Speed (kB/s)'],'6')
 	print "plotting graph..."
+	plot_graph([0,1], timestamp_start,timestamp_end,['CPU Usage(%)'],['timestamp','CPU(%)'],'1')
+	plot_graph([0,2], timestamp_start,timestamp_end,['Average load(per min)'],['timestamp','Average Load'],'2')
+	plot_graph([0,3], timestamp_start,timestamp_end,['RAM Usage(%)'],['timestamp','Memory(%)'],'3')
+	plot_graph([0,5,6,7], timestamp_start,timestamp_end,['Total Processes','Running Processes','Zombie Processes'],['timestamp','No. of Processes'],'4')
+	plot_graph([0,8,9], timestamp_start,timestamp_end,['Read Speed(MB/s)','Write Speed(MB/s)'],['timestamp','Disk Operations'],'5')
+	plot_graph([0,10,11], timestamp_start,timestamp_end,['Up Speed(MB/s)','Down Speed(MB/s)'],['timestamp','Network Speed (kB/s)'],'6')
 
 	# compose the email
 	fromaddr = dotenv.get("From")
 	toaddr = dotenv.get("To")
-	cc= dotenv.get("Cc")
-	bcc= dotenv.get("Bcc")
-	rcpt=[cc]  + [bcc]+ [toaddr]
-	html_body=generate_report_table_html(epoch_start,epoch_end)
+	cc = dotenv.get("Cc")
+	bcc = dotenv.get("Bcc")
+	rcpt =[cc] + [bcc] + [toaddr]
+	html_body = generate_report_table_html(timestamp_start,timestamp_end)
 	send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body)
-	print "email sent!!!"
+
+	## TODO - check if mail actually went through, i.e validate the response from send_mail().
+	print "Email sent successfully!"
