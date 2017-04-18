@@ -5,6 +5,7 @@ import os
 import datetime
 import time
 import inspect
+import sets
 
 # Global variables
 diskstats_before=psutil.disk_io_counters()
@@ -77,10 +78,10 @@ def get_network_usage():
 
 def get_logged_in_users():
 	users=psutil.users()
-	usernames=[]
+	usernames=set([])
 	for i in range(0,len(users)):
-		usernames.append(users[i][0])
-	return usernames
+		usernames.add(users[i][0])
+	return list(usernames)
 
 if __name__ == '__main__':
 	while  1 :
@@ -113,6 +114,6 @@ if __name__ == '__main__':
 		}
 
 		with open(get_directory()+'/data/'+date+'.txt','a' ) as f:
-			f.write(str(system_stats['epoch'])+" "+str(system_stats['cpu usage'])+" "+str(system_stats['cpu load avg'])+" "+str(system_stats['memory'])+" "+str(system_stats['swap'])+" "+str(system_stats['total process'])+" "+str(system_stats['running process'])+" "+str(system_stats['zombie process'])+" "+str(system_stats['read speed'])+" "+str(system_stats['write speed'])+" "+str(system_stats['egress speed'])+" "+str(system_stats['ingress speed'])+" "+str(system_stats['usernames'])+"\n")
+			f.write(str(system_stats['epoch'])+" , "+str(system_stats['cpu usage'])+" , "+str(system_stats['cpu load avg'])+" , "+str(system_stats['memory'])+" , "+str(system_stats['swap'])+" , "+str(system_stats['total process'])+" , "+str(system_stats['running process'])+" , "+str(system_stats['zombie process'])+" , "+str(system_stats['read speed'])+" , "+str(system_stats['write speed'])+" , "+str(system_stats['egress speed'])+" , "+str(system_stats['ingress speed'])+" , "+str(system_stats['usernames'])+"\n")
 		print system_stats['usernames']
 		time.sleep(1)
