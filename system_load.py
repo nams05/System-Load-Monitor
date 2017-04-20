@@ -25,13 +25,9 @@ def get_epoch_time():
 	return int(time.time())
 
 def get_cpu_usage():
-	cpu=psutil.cpu_times()
-	total=0
-	for i in cpu:
-		total+=i
-	cpu_usage=100-((cpu[3]/total)*100)
+	cpu_usage=psutil.cpu_percent(interval=None)
 	load_avg=os.getloadavg()
-	return "{0:.2f}".format(cpu_usage),load_avg[0]
+	return cpu_usage,load_avg[0]
 
 def get_memory_usage():
 	VM=psutil.virtual_memory()
