@@ -1,5 +1,5 @@
 # Monitors System Load   
-The script monitors you system's load (Cpu usage ,RAM usage,swap memory,download speed,upload speed,uptime,total processes,load average,read and write operations) every second and the data is recorded in a file. A new file is created everyday. At the end of the day the file is read and multiple graphs are generated. Average load per hour is calculated and sent with the graphs via mail. 
+The script monitors your system's load (CPU usage ,RAM usage,swap memory,ingress speed,egress speed,total processes,load average,read and write operations) every second and the data is recorded in a file. A new file is created everyday. At the end of the day the file is read and multiple graphs are generated. Average load per hour is calculated and sent with the graphs via mail. 
 
 # How to run the script
 ```
@@ -13,4 +13,4 @@ sudo crontab -e
 
 ``` @reboot /path/to/python /absolute/path/to/system_load.py  ```
 
-**And voila!!! The script will run continuously and send an automated mail at 2359 hr.** 
+**And voila!!! The script will run continuously** 
