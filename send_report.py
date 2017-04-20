@@ -1,7 +1,6 @@
 import sys
 from smtplib import SMTPException
-from smtplib import SMTPRecipientsRefused
-import smtplib#to send email
+import smtplib #to send email
 import os
 import time
 from email.MIMEMultipart import MIMEMultipart
@@ -263,21 +262,20 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		html_part=MIMEText(html_body,'html')
 		msg.attach(html_part)
 
-		for i in range(1,7):
-			img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
-			image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
-			image.add_header('Content-ID', '<image'+str(i)+'>')
-			msg.attach(image)
+		# for i in range(1,7):
+		# 	img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
+		# 	image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
+		# 	image.add_header('Content-ID', '<image'+str(i)+'>')
+		# 	msg.attach(image)
 
 		# f = open('top.txt')
 		# Lines=f.readlines()
 		# body = Lines[0]+ Lines[1]+ Lines[2]+ Lines[3]
 		# f.close()
 		# msg.attach(MIMEText(body, 'plain')) #attach body to MIME msg
-		# try:
 		#create SMTP object for connection
 		server = smtplib.SMTP('smtp.gmail.com', 587)
-		server.set_debuglevel(0)
+		server.set_debuglevel(1)
 		server.ehlo()
 		server.starttls()
 		server.ehlo()
@@ -286,12 +284,11 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		server.login(dotenv.get("From"), dotenv.get("PASSWORD"))
 		text=msg.as_string() #object to string
 		#Send the mail
-		
-		server.sendmail(fromaddr, rcpt, text)
-	# except Exception as e:
-	# 	print str(e)
-	# 		logger.error(str(e))
-		server.quit()
+		error_report=server.sendmail(fromaddr, rcpt, text)
+		if error_report:
+			logger.error('Following recipients were refused with the error code\n'+error_report)
+		else:
+			logger.debug('Mail was successfully sent to all recipients')
 		end_time=time.time()
 		logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
 	except SMTPException as e:
@@ -335,7 +332,7 @@ if __name__=='__main__':
 
 		plot_time_start=time.time()
 		#plotting all graphs
-		logger.debug('plotting graph')
+		logger.debug('Plotting graph')
 		plot_graph([column_index['timestamp'],column_index['cpu usage']], timestamp_start,timestamp_end,['CPU Usage(%)'],['timestamp','CPU(%)'],'1')
 		plot_graph([column_index['timestamp'],column_index['cpu load avg']], timestamp_start,timestamp_end,['Average load(per min)'],['timestamp','Average Load'],'2')
 		plot_graph([column_index['timestamp'],column_index['memory']], timestamp_start,timestamp_end,['RAM Usage(%)'],['timestamp','Memory(%)'],'3')
@@ -354,8 +351,7 @@ if __name__=='__main__':
 		html_body =(generate_report_table_html(timestamp_start,timestamp_end))
 		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body)
 
-		## TODO - check if mail actually went through, i.e validate the response from send_mail().
-		logger.debug('Email sent successfully! File finished executing')
+		logger.debug('File finished executing')
 		end_time=time.time()
 		logger.info('Time taken to execute main(): %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 	except Exception,e:
