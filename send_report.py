@@ -60,9 +60,9 @@ def get_public_ip():
 	try:
 		urlopen('http://ip.42.pl/raw').read() #for ip
 	except Exception,e:
-		logger.error(str(e))
-	else:
-		return urlopen('http://ip.42.pl/raw').read()
+		logger.exception(str(e))
+	
+	return urlopen('http://ip.42.pl/raw').read()
 
 def get_hostname():
 	return socket.gethostname()
@@ -93,12 +93,13 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 					attribute_avg+=new_tuple[column_number]
 					count+=1
 	except IOError as e:
-		raise IOError('Error in calculate_average():'+ repr(e))
-	else:
-		if count==0:
-			return 0
-		attribute_avg=float(attribute_avg)/count
-		return "{0:.2f}".format(attribute_avg)
+		logger.exception(str(e))
+		quit()
+
+	if count==0:
+		return 0
+	attribute_avg=float(attribute_avg)/count
+	return "{0:.2f}".format(attribute_avg)
 
 def get_unique_users(timestamp_start, timestamp_end):
 	unique_users=set([])
@@ -196,14 +197,14 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 				if (total_process==0):
 					continue
 				html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
-	except IOError as e:
-		raise IOError('Error in generate_report_table_html(): %s' %(str(e)))#re-raise error so that it is caught in main()
+	except Exception as e:
+		logger.exception(str(e))
+		quit()
 
-	else:
-		html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
-		then=time.time()
-		logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
-		return html
+	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
+	then=time.time()
+	logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
+	return html
 
 def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,axis_label,graph_no):
 
@@ -222,29 +223,29 @@ def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,
 				for i in range(0,len(column_number_list)):
 					input_list[i].append(new_tuple[column_number_list[i]])
 	except IOError as e:
-		raise IOError("IOError in plot_graph():%s" %(repr(e)))#re-raise the error so that it is caught by exception in main()
-	else:
-		## plot graph using input_list
-		graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
-		plt.close('all')
-		#set size of the graph image
-		fig_size = plt.rcParams["figure.figsize"]
-		fig_size[0] = 20
-		fig_size[1] = 10
-		plt.rcParams["figure.figsize"] = fig_size
-		graph_name=[]
-		for i in range(1,len(input_list)):
-			graph_name.append(plt.plot(input_list[0],input_list[i],'r',label=attribute_label[i-1])) # plotting each attribute against time
-		# plt.xticks(np.arange(0, 24 , 2))
-		# plt.yticks(np.arange(0, 110 , 10))
-		for i in range(0,len(graph_name)):
-			plt.setp(graph_name[i],color=graphline_color[i], linewidth=1.0)
-		plt.legend(loc='upper right')
-		plt.xlabel(axis_label[0])
-		plt.ylabel(axis_label[1])
-		# plt.axis([0, 23,0,100],facecolor='b')
-		plt.grid(True)
-		plt.savefig(get_current_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
+		logger.exception(str(e))
+
+	## plot graph using input_list
+	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
+	plt.close('all')
+	#set size of the graph image
+	fig_size = plt.rcParams["figure.figsize"]
+	fig_size[0] = 20
+	fig_size[1] = 10
+	plt.rcParams["figure.figsize"] = fig_size
+	graph_name=[]
+	for i in range(1,len(input_list)):
+		graph_name.append(plt.plot(input_list[0],input_list[i],'r',label=attribute_label[i-1])) # plotting each attribute against time
+	# plt.xticks(np.arange(0, 24 , 2))
+	# plt.yticks(np.arange(0, 110 , 10))
+	for i in range(0,len(graph_name)):
+		plt.setp(graph_name[i],color=graphline_color[i], linewidth=1.0)
+	plt.legend(loc='upper right')
+	plt.xlabel(axis_label[0])
+	plt.ylabel(axis_label[1])
+	# plt.axis([0, 23,0,100],facecolor='b')
+	plt.grid(True)
+	plt.savefig(get_current_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
 
 
 def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
@@ -292,7 +293,8 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		end_time=time.time()
 		logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
 	except SMTPException as e:
-		raise SMTPException("Error in send_mail(): "+ repr(e))
+		logger.exception(str(e))
+		quit()
 
 
 #<===========================================================MAIN PROGRAM=============================================================>
@@ -355,7 +357,7 @@ if __name__=='__main__':
 		end_time=time.time()
 		logger.info('Time taken to execute main(): %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 	except Exception,e:
-		logger.error(str(e))
+		logger.exception(str(e))
 		end_time=time.time()
 		logger.info('Time taken to execute main(): %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 		quit()
