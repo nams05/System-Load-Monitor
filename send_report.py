@@ -74,6 +74,22 @@ def color(attribute_percent):
 	else:
 		return "#FFB521"#yellow
 
+def binary_search(key,start,end):
+	if(start<=end):
+		with open(get_current_directory()+'/data/'+date+'.txt') as f:
+			lines_read=f.readlines()
+			mid=(start+end)/2
+			new_tuple=ast.literal_eval(lines_read[mid])
+			print new_tuple
+			if new_tuple[0]==key:
+				return mid
+			elif (new_tuple[0]<key):
+				return binary_search(key,mid+1,end)
+			elif (new_tuple[0]>key):
+				return binary_search(key,start,mid-1)
+	else:
+		return None
+
 def calculate_average(column_number, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
 	start=time.time()
@@ -83,7 +99,8 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 		#read file
 		with open(get_current_directory()+'/data/'+date+'.txt') as f:
 			lines_read=f.readlines()
-			for each_line in lines_read:
+			index=binary_search(timestamp_start,0,len(lines_read)-1)
+			for each_line in lines_read[index:]:
 				modified_line=each_line.rstrip('\n')
 				new_tuple=ast.literal_eval(modified_line)
 				if (new_tuple[0]>=timestamp_start):
