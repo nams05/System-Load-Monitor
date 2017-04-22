@@ -15,6 +15,7 @@ from urllib2 import urlopen # to get IP address
 import ast #str to appropriate datatype
 import psutil
 import logging
+import timeit
 
 #initialize logger
 logger=logging.getLogger(__name__)
@@ -57,11 +58,6 @@ def get_current_directory():
 	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 def get_public_ip():
-	try:
-		urlopen('http://ip.42.pl/raw').read() #for ip
-	except Exception,e:
-		logger.exception(str(e))
-	
 	return urlopen('http://ip.42.pl/raw').read()
 
 def get_hostname():
@@ -80,6 +76,7 @@ def color(attribute_percent):
 
 def calculate_average(column_number, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
+	start=time.time()
 	count=0
 	attribute_avg=0
 	try:
@@ -89,9 +86,12 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 			for each_line in lines_read:
 				modified_line=each_line.rstrip('\n')
 				new_tuple=ast.literal_eval(modified_line)
-				if (new_tuple[0]>=timestamp_start) and (new_tuple[0]<=timestamp_end):
-					attribute_avg+=new_tuple[column_number]
-					count+=1
+				if (new_tuple[0]>=timestamp_start):
+					if (new_tuple[0]<=timestamp_end):
+						attribute_avg+=new_tuple[column_number]
+						count+=1
+					elif (new_tuple[0])>timestamp_end:
+						break
 	except IOError as e:
 		logger.exception(str(e))
 		quit()
@@ -99,6 +99,8 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 	if count==0:
 		return 0
 	attribute_avg=float(attribute_avg)/count
+	stop=time.time()
+	logger.info('Time taken to execute calculate_average() %s' %"{0:.2f}".format(stop-start))
 	return "{0:.2f}".format(attribute_avg)
 
 def get_unique_users(timestamp_start, timestamp_end):
@@ -123,83 +125,80 @@ def get_unique_users(timestamp_start, timestamp_end):
 #produce html code for email body
 def generate_report_table_html(timestamp_start, timestamp_end):
 	#current time
-	try:
-		now=time.time()
-		tm_struct=time.localtime(now)
-		mail_time=time.strftime("%I:%M:%S %p",tm_struct) # time in 12hour format
-		used_disk,free_disk=get_disk_usage()
-		total_memory=get_total_memory()
+	now=time.time()
+	tm_struct=time.localtime(now)
+	mail_time=time.strftime("%I:%M:%S %p",tm_struct) # time in 12hour format
+	used_disk,free_disk=get_disk_usage()
+	total_memory=get_total_memory()
 
-		date=get_date_from_timestamp(timestamp_start) # eg 03 Apr 2017
-		html='''<!DOCTYPE html>
-		<html>
-		<head>
-			<style type="text/css">
-				table {
-		    	border-spacing: 5px;
-		    	width:100%;
-		    	margin:auto;
-		    	}
-				th{
-				background-color: black;
-		    	color: white;
-				}
-				table, th, td {
+	date=get_date_from_timestamp(timestamp_start) # eg 03 Apr 2017
+	html='''<!DOCTYPE html>
+	<html>
+	<head>
+		<style type="text/css">
+			table {
+	    	border-spacing: 5px;
+	    	width:100%;
+	    	margin:auto;
+	    	}
+			th{
+			background-color: black;
+	    	color: white;
+			}
+			table, th, td {
 
-		    	border: 2px solid white;
-		    	border-collapse: collapse;
-		    	}
-		    	th, td {
-		    	padding: 10px;
-		    	text-align: center;
-				}
-				caption{
-				font:15px Helvetica ;
-				margin :8px;
-				margin-bottom: 8px;	
-				}
-				img{
-					
-					border-style: solid; 
-					border-color: #ddd;
-				    border-width:0.20%;
-				    width: 49%;
-				    margin-bottom:.80%
-				}
+	    	border: 2px solid white;
+	    	border-collapse: collapse;
+	    	}
+	    	th, td {
+	    	padding: 10px;
+	    	text-align: center;
+			}
+			caption{
+			font:15px Helvetica ;
+			margin :8px;
+			margin-bottom: 8px;	
+			}
+			img{
+				
+				border-style: solid; 
+				border-color: #ddd;
+			    border-width:0.20%;
+			    width: 49%;
+			    margin-bottom:.80%
+			}
 
 
-			</style>
-		</head>
-		<body>'''
-		html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()+'''<br>Following table contains various system metrics:<br><br>
-				<table>
+		</style>
+	</head>
+	<body>'''
+	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()+'''<br>Following table contains various system metrics:<br><br>
+			<table>
 
-					<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
-					<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
-				'''
+				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
+				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
+			'''
 
-		for i in range(0,24):
-			if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
-				hour_timestamp_start=timestamp_of_each_hour[i]
-				hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
-				cpu=float(calculate_average(column_index['cpu usage'], hour_timestamp_start, hour_timestamp_end))
-				load=float(calculate_average(column_index['cpu load avg'], hour_timestamp_start, hour_timestamp_end))
-				memory=float(calculate_average(column_index['memory'], hour_timestamp_start, hour_timestamp_end))
-				swap=float(calculate_average(column_index['swap'], hour_timestamp_start, hour_timestamp_end))
-				total_process=int(float(calculate_average(column_index['total process'], hour_timestamp_start, hour_timestamp_end)))
-				running=int(float(calculate_average(column_index['running process'], hour_timestamp_start, hour_timestamp_end)))
-				zombie=int(float(calculate_average(column_index['zombie process'], hour_timestamp_start, hour_timestamp_end)))
-				read=float(calculate_average(column_index['read speed'], hour_timestamp_start, hour_timestamp_end))
-				write=float(calculate_average(column_index['write speed'], hour_timestamp_start, hour_timestamp_end))
-				egress=float(calculate_average(column_index['egress speed'], hour_timestamp_start, hour_timestamp_end))
-				ingress=float(calculate_average(column_index['ingress speed'], hour_timestamp_start, hour_timestamp_end))
-				usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
-				if (total_process==0):
-					continue
-				html+="<tr><td style=\"background-color:"+color(i*4)+"\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
-	except Exception as e:
-		logger.exception(str(e))
-		quit()
+	for i in range(0,24):
+		if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
+			hour_timestamp_start=timestamp_of_each_hour[i]
+			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
+			cpu=float(calculate_average(column_index['cpu usage'], hour_timestamp_start, hour_timestamp_end))
+			load=float(calculate_average(column_index['cpu load avg'], hour_timestamp_start, hour_timestamp_end))
+			memory=float(calculate_average(column_index['memory'], hour_timestamp_start, hour_timestamp_end))
+			swap=float(calculate_average(column_index['swap'], hour_timestamp_start, hour_timestamp_end))
+			total_process=int(float(calculate_average(column_index['total process'], hour_timestamp_start, hour_timestamp_end)))
+			running=int(float(calculate_average(column_index['running process'], hour_timestamp_start, hour_timestamp_end)))
+			zombie=int(float(calculate_average(column_index['zombie process'], hour_timestamp_start, hour_timestamp_end)))
+			read=float(calculate_average(column_index['read speed'], hour_timestamp_start, hour_timestamp_end))
+			write=float(calculate_average(column_index['write speed'], hour_timestamp_start, hour_timestamp_end))
+			egress=float(calculate_average(column_index['egress speed'], hour_timestamp_start, hour_timestamp_end))
+			ingress=float(calculate_average(column_index['ingress speed'], hour_timestamp_start, hour_timestamp_end))
+			usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
+			if (total_process==0):
+				continue
+			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
+	
 
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	then=time.time()
@@ -217,7 +216,7 @@ def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,
 			lines_read=f.readlines()
 			for each_line in lines_read:
 				modified_line=each_line.rstrip('\n')
-				new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple accoring to syntax
+				new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple according to syntax
 
 				# segregate into lists
 				for i in range(0,len(column_number_list)):
@@ -276,7 +275,7 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		# msg.attach(MIMEText(body, 'plain')) #attach body to MIME msg
 		#create SMTP object for connection
 		server = smtplib.SMTP('smtp.gmail.com', 587)
-		server.set_debuglevel(1)
+		server.set_debuglevel(0)
 		server.ehlo()
 		server.starttls()
 		server.ehlo()
