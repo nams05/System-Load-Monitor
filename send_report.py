@@ -16,7 +16,7 @@ import ast #str to appropriate datatype
 import psutil
 import logging
 import timeit
-
+import linecache
 #initialize logger
 logger=logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -76,39 +76,42 @@ def color(attribute_percent):
 
 def binary_search(key,start,end):
 	if(start<=end):
-		with open(get_current_directory()+'/data/'+date+'.txt') as f:
-			lines_read=f.readlines()
-			mid=(start+end)/2
-			new_tuple=ast.literal_eval(lines_read[mid])
-			print new_tuple
-			if new_tuple[0]==key:
-				return mid
-			elif (new_tuple[0]<key):
-				return binary_search(key,mid+1,end)
-			elif (new_tuple[0]>key):
-				return binary_search(key,start,mid-1)
+		filename=get_current_directory()+'/data/'+date+'.txt'
+		mid=(start+end)/2
+		line=linecache.getline(filename,mid)
+		new_tuple=ast.literal_eval(line)
+		if new_tuple[0]==key:
+			return mid
+		elif (new_tuple[0]<key):
+			return binary_search(key,mid+1,end)
+		elif (new_tuple[0]>key):
+			return binary_search(key,start,mid-1)
 	else:
-		return None
+			return None
 
 def calculate_average(column_number, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
 	start=time.time()
+	global total_lines
+	global line_offset
 	count=0
 	attribute_avg=0
 	try:
 		#read file
-		with open(get_current_directory()+'/data/'+date+'.txt') as f:
-			lines_read=f.readlines()
-			index=binary_search(timestamp_start,0,len(lines_read)-1)
-			for each_line in lines_read[index:]:
-				modified_line=each_line.rstrip('\n')
+		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+			index=binary_search(timestamp_start,1,total_lines)
+			if index == None:
+				index=1
+			file.seek(line_offset[index-1])
+			for line in file:
+				modified_line=line.rstrip('\n')
 				new_tuple=ast.literal_eval(modified_line)
-				if (new_tuple[0]>=timestamp_start):
-					if (new_tuple[0]<=timestamp_end):
-						attribute_avg+=new_tuple[column_number]
-						count+=1
-					elif (new_tuple[0])>timestamp_end:
-						break
+				if (new_tuple[0])>timestamp_end :
+					break
+				elif (new_tuple[0]>=timestamp_start):
+					attribute_avg+=new_tuple[column_number]
+					count+=1
+	
 	except IOError as e:
 		logger.exception(str(e))
 		quit()
@@ -122,9 +125,9 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 
 def get_unique_users(timestamp_start, timestamp_end):
 	unique_users=set([])
-	with open(get_current_directory()+'/data/'+date+'.txt') as f:
-		lines_read=f.readlines()
-		for each_line in lines_read:
+
+	with open(get_current_directory()+'/data/'+date+'.txt') as file:
+		for each_line in file:
 			modified_line=each_line.rstrip('\n')
 			new_tuple=ast.literal_eval(modified_line)
 			if (new_tuple[0]>=timestamp_start) and (new_tuple[0]<=timestamp_end):
@@ -229,9 +232,8 @@ def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,
 
 	## read file according to column number , segregate into lists
 	try:
-		with open(get_current_directory()+'/data/'+date+'.txt') as f:
-			lines_read=f.readlines()
-			for each_line in lines_read:
+		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+			for each_line in file:
 				modified_line=each_line.rstrip('\n')
 				new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple according to syntax
 
@@ -348,6 +350,14 @@ if __name__=='__main__':
 
 		date=get_date_from_timestamp(timestamp_start)
 
+		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+			line_offset = []
+			offset = 0
+			total_lines=0
+			for line in file:
+				line_offset.append(offset)
+				offset += len(line)
+				total_lines+=1
 		plot_time_start=time.time()
 		#plotting all graphs
 		logger.debug('Plotting graph')
