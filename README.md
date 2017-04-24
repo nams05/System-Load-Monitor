@@ -11,6 +11,9 @@ sudo crontab -e
 ```
 * Contents of the cron file
 
-``` @reboot /path/to/python /absolute/path/to/system_load.py  ```
+``` 
+@reboot /path/to/python /absolute/path/to/system_load.py
+59 32 * * *  /path/to/python /absolute/path/to/system_load.py 
+ ```
 
-**And voila!!! The script will run continuously** 
+**And voila!!! The script will run continuously and mail will be sent at 2359 hrs** 
