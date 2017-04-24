@@ -17,15 +17,11 @@ import psutil
 import logging
 import timeit
 import linecache
-#initialize logger
-logger=logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-formatter=logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-file_handler=logging.FileHandler('send_report.log')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-# logging.basicConfig(filename='file.log',level=logging.DEBUG,format='%(asctime)s [%(levelname)s] %(message)s')
 
+
+def check_directory_exists(directory):
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 def get_disk_usage():
 	disk_stats=psutil.disk_usage('/')
@@ -100,7 +96,7 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 		#read file
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
 			index=binary_search(timestamp_start,1,total_lines)
-			if index == None:
+			if index == None: #if index is not found search the entire file
 				index=1
 			file.seek(line_offset[index-1])
 			for line in file:
@@ -120,7 +116,7 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 		return 0
 	attribute_avg=float(attribute_avg)/count
 	stop=time.time()
-	logger.info('Time taken to execute calculate_average() %s' %"{0:.2f}".format(stop-start))
+	logger.info('Time taken to execute calculate_average(): %s' %"{0:.2f}".format(stop-start))
 	return "{0:.2f}".format(attribute_avg)
 
 def get_unique_users(timestamp_start, timestamp_end):
@@ -222,7 +218,7 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	then=time.time()
-	logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
+	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
 	return html
 
 def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,axis_label,graph_no):
@@ -264,7 +260,11 @@ def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,
 	# plt.axis([0, 23,0,100],facecolor='b')
 	plt.grid(True)
 	plt.savefig(get_current_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
-
+	log_str=""
+	for i in attribute_label:
+		log_str+=i+', '
+	log_str=log_str.rstrip(", ")
+	logger.debug('Graph: '+log_str+' plotted against Time(secs)')
 
 def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	try:
@@ -281,11 +281,11 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		html_part=MIMEText(html_body,'html')
 		msg.attach(html_part)
 
-		# for i in range(1,7):
-		# 	img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
-		# 	image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
-		# 	image.add_header('Content-ID', '<image'+str(i)+'>')
-		# 	msg.attach(image)
+		for i in range(1,7):
+			img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
+			image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
+			image.add_header('Content-ID', '<image'+str(i)+'>')
+			msg.attach(image)
 
 		# f = open('top.txt')
 		# Lines=f.readlines()
@@ -301,6 +301,7 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 
 		#Next, log in to the server
 		server.login(dotenv.get("From"), dotenv.get("PASSWORD"))
+		logger.debug('Successfully logged in')
 		text=msg.as_string() #object to string
 		#Send the mail
 		error_report=server.sendmail(fromaddr, rcpt, text)
@@ -309,7 +310,7 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		else:
 			logger.debug('Mail was successfully sent to all recipients')
 		end_time=time.time()
-		logger.info('Time taken to execute %s():%s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
+		logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
 	except SMTPException as e:
 		logger.exception(str(e))
 		quit()
@@ -320,7 +321,29 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 if __name__=='__main__':
 	try:
 		start_time=time.time()
-		logger.debug('File starts executing')
+
+		if len(sys.argv)>1:
+			timestamp_of_each_hour=get_timestamp_of_each_hour(int(sys.argv[1]))
+			timestamp_start=int(sys.argv[1])
+			timestamp_end=int(sys.argv[2])
+		else:
+			timestamp_of_each_hour=get_timestamp_of_each_hour(int(time.time()))
+			timestamp_start=timestamp_of_each_hour[0]
+			timestamp_end=get_timestamp_for_next_hour(timestamp_of_each_hour[23])-1
+
+		date=get_date_from_timestamp(timestamp_start)
+
+		check_directory_exists(get_current_directory()+'/log')
+		#initialize logger
+		logger=logging.getLogger(__name__)
+		logger.setLevel(logging.DEBUG)
+		formatter=logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+		file_handler=logging.FileHandler(get_current_directory()+'/log/'+date+'.log')
+		file_handler.setFormatter(formatter)
+		logger.addHandler(file_handler)
+		# logging.basicConfig(filename='file.log',level=logging.DEBUG,format='%(asctime)s [%(levelname)s] %(message)s')
+
+		
 		dotenv.load()
 
 		column_index={
@@ -339,17 +362,6 @@ if __name__=='__main__':
 		'usernames':12
 		}
 
-		if len(sys.argv)>1:
-			timestamp_of_each_hour=get_timestamp_of_each_hour(int(sys.argv[1]))
-			timestamp_start=int(sys.argv[1])
-			timestamp_end=int(sys.argv[2])
-		else:
-			timestamp_of_each_hour=get_timestamp_of_each_hour(int(time.time()))
-			timestamp_start=timestamp_of_each_hour[0]
-			timestamp_end=get_timestamp_for_next_hour(timestamp_of_each_hour[23])-1
-
-		date=get_date_from_timestamp(timestamp_start)
-
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
 			line_offset = []
 			offset = 0
@@ -360,7 +372,6 @@ if __name__=='__main__':
 				total_lines+=1
 		plot_time_start=time.time()
 		#plotting all graphs
-		logger.debug('Plotting graph')
 		plot_graph([column_index['timestamp'],column_index['cpu usage']], timestamp_start,timestamp_end,['CPU Usage(%)'],['timestamp','CPU(%)'],'1')
 		plot_graph([column_index['timestamp'],column_index['cpu load avg']], timestamp_start,timestamp_end,['Average load(per min)'],['timestamp','Average Load'],'2')
 		plot_graph([column_index['timestamp'],column_index['memory']], timestamp_start,timestamp_end,['RAM Usage(%)'],['timestamp','Memory(%)'],'3')
@@ -368,7 +379,7 @@ if __name__=='__main__':
 		plot_graph([column_index['timestamp'],column_index['read speed'],column_index['write speed']], timestamp_start,timestamp_end,['Read Speed(MB/s)','Write Speed(MB/s)'],['timestamp','Disk Operations'],'5')
 		plot_graph([column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']], timestamp_start,timestamp_end,['Egress Speed(MB/s)','Ingress Speed(MB/s)'],['timestamp','Network Speed (MB/s)'],'6')
 		plot_time_end=time.time()
-		logger.info('Time taken to plot all graphs:%s secs' %("{0:.2f}".format(plot_time_end-plot_time_start)))
+		logger.info('Time taken to plot all graphs: %s secs' %("{0:.2f}".format(plot_time_end-plot_time_start)))
 
 		# compose the email
 		fromaddr = dotenv.get("From")
@@ -379,12 +390,11 @@ if __name__=='__main__':
 		html_body =(generate_report_table_html(timestamp_start,timestamp_end))
 		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body)
 
-		logger.debug('File finished executing')
 		end_time=time.time()
-		logger.info('Time taken to execute main(): %s secs\n' %("{0:.2f}".format(end_time-start_time)))
+		logger.info('Finished execution in %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 	except Exception,e:
 		logger.exception(str(e))
 		end_time=time.time()
-		logger.info('Time taken to execute main(): %s secs\n' %("{0:.2f}".format(end_time-start_time)))
+		logger.info('Finished execution in %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 		quit()
 
