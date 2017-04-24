@@ -85,13 +85,13 @@ def binary_search(key,start,end):
 	else:
 			return None
 
-def calculate_average(column_number, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
+def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
 	start=time.time()
 	global total_lines
 	global line_offset
+	attribute_averages=[0 for i in range(len(column_number_list))]
 	count=0
-	attribute_avg=0
 	try:
 		#read file
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
@@ -105,8 +105,9 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 				if (new_tuple[0])>timestamp_end :
 					break
 				elif (new_tuple[0]>=timestamp_start):
-					attribute_avg+=new_tuple[column_number]
-					count+=1
+					for i in range(len(column_number_list)):
+						attribute_averages[i]+=new_tuple[column_number_list[i]]
+						count+=1
 	
 	except IOError as e:
 		logger.exception(str(e))
@@ -114,19 +115,27 @@ def calculate_average(column_number, timestamp_start, timestamp_end): # avg of t
 
 	if count==0:
 		return 0
-	attribute_avg=float(attribute_avg)/count
+	for i in range(len(column_number_list)):
+		attribute_averages[i]=float(attribute_averages[i])/count
 	stop=time.time()
-	logger.info('Time taken to execute calculate_average(): %s' %"{0:.2f}".format(stop-start))
-	return "{0:.2f}".format(attribute_avg)
+	logger.info('Time taken to execute calculate_average(): %s secs' %"{0:.2f}".format(stop-start))
+	return attribute_averages
 
 def get_unique_users(timestamp_start, timestamp_end):
 	unique_users=set([])
-
+	global total_lines
+	global line_offset
 	with open(get_current_directory()+'/data/'+date+'.txt') as file:
-		for each_line in file:
-			modified_line=each_line.rstrip('\n')
+		index=binary_search(timestamp_start,1,total_lines)
+		if index == None: #if index is not found search the entire file
+			index=1
+		file.seek(line_offset[index-1])
+		for line in file:
+			modified_line=line.rstrip('\n')
 			new_tuple=ast.literal_eval(modified_line)
-			if (new_tuple[0]>=timestamp_start) and (new_tuple[0]<=timestamp_end):
+			if (new_tuple[0])>timestamp_end :
+				break
+			elif (new_tuple[0]>=timestamp_start):
 				for each_user in new_tuple[12]:
 					unique_users.add(each_user)
 
@@ -193,30 +202,35 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 
 				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
 				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
-			'''
-
+			'''	
 	for i in range(0,24):
+		
 		if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
 			hour_timestamp_start=timestamp_of_each_hour[i]
 			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
-			cpu=float(calculate_average(column_index['cpu usage'], hour_timestamp_start, hour_timestamp_end))
-			load=float(calculate_average(column_index['cpu load avg'], hour_timestamp_start, hour_timestamp_end))
-			memory=float(calculate_average(column_index['memory'], hour_timestamp_start, hour_timestamp_end))
-			swap=float(calculate_average(column_index['swap'], hour_timestamp_start, hour_timestamp_end))
-			total_process=int(float(calculate_average(column_index['total process'], hour_timestamp_start, hour_timestamp_end)))
-			running=int(float(calculate_average(column_index['running process'], hour_timestamp_start, hour_timestamp_end)))
-			zombie=int(float(calculate_average(column_index['zombie process'], hour_timestamp_start, hour_timestamp_end)))
-			read=float(calculate_average(column_index['read speed'], hour_timestamp_start, hour_timestamp_end))
-			write=float(calculate_average(column_index['write speed'], hour_timestamp_start, hour_timestamp_end))
-			egress=float(calculate_average(column_index['egress speed'], hour_timestamp_start, hour_timestamp_end))
-			ingress=float(calculate_average(column_index['ingress speed'], hour_timestamp_start, hour_timestamp_end))
+			averages=(calculate_average([column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']], hour_timestamp_start, hour_timestamp_end))
+
+			cpu=float("{0:.2f}".format(averages[0]))
+			load=float("{0:.2f}".format(averages[1]))
+			memory=float("{0:.2f}".format(averages[2]))
+			swap=float("{0:.2f}".format(averages[3]))
+			total_process=int(float("{0:.2f}".format(averages[4])))
+			running=int(float("{0:.2f}".format(averages[5])))
+			zombie=int(float(averages[6]))
+			read=float("{0:.2f}".format(averages[7]))
+			write=float("{0:.2f}".format(averages[8]))
+			egress=float("{0:.2f}".format(averages[9]))
+			ingress=float("{0:.2f}".format(averages[10]))
 			usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
+
 			if (total_process==0):
 				continue
-			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
-	
+			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
+			
+
 
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
+	
 	then=time.time()
 	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
 	return html
@@ -234,7 +248,7 @@ def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,
 				new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple according to syntax
 
 				# segregate into lists
-				for i in range(0,len(column_number_list)):
+				for i in range(len(column_number_list)):
 					input_list[i].append(new_tuple[column_number_list[i]])
 	except IOError as e:
 		logger.exception(str(e))
