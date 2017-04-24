@@ -11,9 +11,12 @@ import sets
 diskstats_before=psutil.disk_io_counters()
 netstats_before=psutil.net_io_counters(pernic=False)
 
-
 def get_directory():
-	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) 
+	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+def check_directory_exists(directory):
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 def get_date():
 	now=datetime.datetime.now()
@@ -81,7 +84,9 @@ def get_logged_in_users():
 
 if __name__ == '__main__':
 	while  1 :
-		## *get system statistics
+		check_directory_exists(get_directory()+'/data')
+		check_directory_exists(get_directory()+'/graph')
+		## get system statistics
 		date=get_date()
 		epoch_time=get_epoch_time()
 		cpu_usage,cpu_load_avg=get_cpu_usage()
@@ -111,5 +116,5 @@ if __name__ == '__main__':
 
 		with open(get_directory()+'/data/'+date+'.txt','a' ) as f:
 			f.write(str(system_stats['epoch'])+" , "+str(system_stats['cpu usage'])+" , "+str(system_stats['cpu load avg'])+" , "+str(system_stats['memory'])+" , "+str(system_stats['swap'])+" , "+str(system_stats['total process'])+" , "+str(system_stats['running process'])+" , "+str(system_stats['zombie process'])+" , "+str(system_stats['read speed'])+" , "+str(system_stats['write speed'])+" , "+str(system_stats['egress speed'])+" , "+str(system_stats['ingress speed'])+" , "+str(system_stats['usernames'])+"\n")
-		print system_stats['usernames']
+
 		time.sleep(1)
