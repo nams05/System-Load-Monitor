@@ -107,7 +107,7 @@ def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg
 				elif (new_tuple[0]>=timestamp_start):
 					for i in range(len(column_number_list)):
 						attribute_averages[i]+=new_tuple[column_number_list[i]]
-						count+=1
+					count+=1
 	
 	except IOError as e:
 		logger.exception(str(e))
@@ -156,7 +156,7 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 	used_disk,free_disk=get_disk_usage()
 	total_memory=get_total_memory()
 
-	date=get_date_from_timestamp(timestamp_start) # eg 03 Apr 2017
+	date=get_date_from_timestamp(now) # eg 03 Apr 2017
 	html='''<!DOCTYPE html>
 	<html>
 	<head>
