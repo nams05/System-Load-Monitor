@@ -15,8 +15,6 @@ from urllib2 import urlopen # to get IP address
 import ast #str to appropriate datatype
 import psutil
 import logging
-import timeit
-import linecache
 
 
 def check_directory_exists(directory):
@@ -74,14 +72,19 @@ def binary_search(key,start,end):
 	if(start<=end):
 		filename=get_current_directory()+'/data/'+date+'.txt'
 		mid=(start+end)/2
-		line=linecache.getline(filename,mid)
-		new_tuple=ast.literal_eval(line)
-		if new_tuple[0]==key:
-			return mid
-		elif (new_tuple[0]<key):
-			return binary_search(key,mid+1,end)
-		elif (new_tuple[0]>key):
-			return binary_search(key,start,mid-1)
+		f=open(filename,'r')
+		f.seek(line_offset[mid-1])
+		for line in f:
+			new_tuple=ast.literal_eval(line)
+			if new_tuple[0]==key:
+				f.close()
+				return mid
+			elif (new_tuple[0]<key):
+				f.close()
+				return binary_search(key,mid+1,end)
+			elif (new_tuple[0]>key):
+				f.close()
+				return binary_search(key,start,mid-1)
 	else:
 			return None
 
@@ -204,7 +207,6 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
 			'''	
 	for i in range(0,24):
-		
 		if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
 			hour_timestamp_start=timestamp_of_each_hour[i]
 			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
@@ -226,8 +228,6 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 			if (total_process==0):
 				continue
 			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
-			
-
 
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	
