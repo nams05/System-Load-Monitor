@@ -111,7 +111,6 @@ def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg
 					for i in range(len(column_number_list)):
 						attribute_averages[i]+=new_tuple[column_number_list[i]]
 					count+=1
-	
 	except IOError as e:
 		logger.exception(str(e))
 		quit()
@@ -207,27 +206,38 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
 			'''	
 	for i in range(0,24):
-		if (timestamp_of_each_hour[i]>=timestamp_start) and (timestamp_of_each_hour[i]<=timestamp_end):
+		if(timestamp_of_each_hour[i]>timestamp_end):
+			break
+		elif (timestamp_of_each_hour[i]<timestamp_start):
+			continue
+		elif (timestamp_of_each_hour[i]==timestamp_start):
 			hour_timestamp_start=timestamp_of_each_hour[i]
 			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
-			averages=(calculate_average([column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']], hour_timestamp_start, hour_timestamp_end))
+			if(hour_timestamp_end>timestamp_end):
+				hour_timestamp_end=timestamp_end
+		elif (timestamp_of_each_hour[i]>timestamp_start):
+			hour_timestamp_start=timestamp_of_each_hour[i]
+			hour_timestamp_end=get_timestamp_for_next_hour(timestamp_of_each_hour[i])-1
+			if(hour_timestamp_end>timestamp_end):
+				hour_timestamp_end=timestamp_end
+		averages=(calculate_average([column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']], hour_timestamp_start, hour_timestamp_end))
 
-			cpu=float("{0:.2f}".format(averages[0]))
-			load=float("{0:.2f}".format(averages[1]))
-			memory=float("{0:.2f}".format(averages[2]))
-			swap=float("{0:.2f}".format(averages[3]))
-			total_process=int(float("{0:.2f}".format(averages[4])))
-			running=int(float("{0:.2f}".format(averages[5])))
-			zombie=int(float(averages[6]))
-			read=float("{0:.2f}".format(averages[7]))
-			write=float("{0:.2f}".format(averages[8]))
-			egress=float("{0:.2f}".format(averages[9]))
-			ingress=float("{0:.2f}".format(averages[10]))
-			usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
+		cpu=float("{0:.2f}".format(averages[0]))
+		load=float("{0:.2f}".format(averages[1]))
+		memory=float("{0:.2f}".format(averages[2]))
+		swap=float("{0:.2f}".format(averages[3]))
+		total_process=int(float("{0:.2f}".format(averages[4])))
+		running=int(float("{0:.2f}".format(averages[5])))
+		zombie=int(float(averages[6]))
+		read=float("{0:.2f}".format(averages[7]))
+		write=float("{0:.2f}".format(averages[8]))
+		egress=float("{0:.2f}".format(averages[9]))
+		ingress=float("{0:.2f}".format(averages[10]))
+		usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
 
-			if (total_process==0):
-				continue
-			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
+		if (total_process==0):
+			continue
+		html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
 
 	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	
