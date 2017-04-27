@@ -245,50 +245,61 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
 	return html
 
-def plot_graph(column_number_list,timestamp_start,timestamp_end,attribute_label,axis_label,graph_no):
-
+def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,attribute_label_list,axis_label_list):
+	global column_index
 	date=get_date_from_timestamp(timestamp_start)
-	input_list=[[] for i in range(len(column_number_list))]
+	input_list=[[] for i in range(len(column_index))]
+	unique_columns=set([])
+	for i in range(len(list_of_column_number_list)):
+		for j in range(len(list_of_column_number_list[i])):
+			unique_columns.add(list_of_column_number_list[i][j])
 
 	## read file according to column number , segregate into lists
 	try:
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+			index=binary_search(timestamp_start,1,total_lines)
+			if index == None: #if index is not found search the entire file
+				index=1
+			file.seek(line_offset[index-1])
 			for each_line in file:
 				modified_line=each_line.rstrip('\n')
 				new_tuple=ast.literal_eval(modified_line) #convert line to list/tuple according to syntax
-
+				if (new_tuple[0])>timestamp_end :
+					break
+				elif (new_tuple[0]>=timestamp_start):
 				# segregate into lists
-				for i in range(len(column_number_list)):
-					input_list[i].append(new_tuple[column_number_list[i]])
+					for i in unique_columns:
+						input_list[i].append(new_tuple[i])
 	except IOError as e:
 		logger.exception(str(e))
 
 	## plot graph using input_list
 	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
-	plt.close('all')
-	#set size of the graph image
-	fig_size = plt.rcParams["figure.figsize"]
-	fig_size[0] = 20
-	fig_size[1] = 10
-	plt.rcParams["figure.figsize"] = fig_size
-	graph_name=[]
-	for i in range(1,len(input_list)):
-		graph_name.append(plt.plot(input_list[0],input_list[i],'r',label=attribute_label[i-1])) # plotting each attribute against time
-	# plt.xticks(np.arange(0, 24 , 2))
-	# plt.yticks(np.arange(0, 110 , 10))
-	for i in range(0,len(graph_name)):
-		plt.setp(graph_name[i],color=graphline_color[i], linewidth=1.0)
-	plt.legend(loc='upper right')
-	plt.xlabel(axis_label[0])
-	plt.ylabel(axis_label[1])
-	# plt.axis([0, 23,0,100],facecolor='b')
-	plt.grid(True)
-	plt.savefig(get_current_directory()+'/graph/'+date+'_'+graph_no+'_graph.jpg')
-	log_str=""
-	for i in attribute_label:
-		log_str+=i+', '
-	log_str=log_str.rstrip(", ")
-	logger.debug('Graph: '+log_str+' plotted against Time(secs)')
+	for i in range(len(list_of_column_number_list)):
+		plt.close('all')
+		#set size of the graph image
+		fig_size = plt.rcParams["figure.figsize"]
+		fig_size[0] = 20
+		fig_size[1] = 10
+		plt.rcParams["figure.figsize"] = fig_size
+		graph_name=[]
+		for j in range(1,len(list_of_column_number_list[i])):
+			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_number_list[i][j]],'r',label=attribute_label_list[i][j-1])) # plotting each attribute against time
+		# plt.xticks(np.arange(0, 24 , 2))
+		# plt.yticks(np.arange(0, 110 , 10))
+		for j in range(len(graph_name)):
+			plt.setp(graph_name[j],color=graphline_color[j], linewidth=1.0)
+		plt.legend(loc='upper right')
+		plt.xlabel(axis_label_list[i][0])
+		plt.ylabel(axis_label_list[i][1])
+		# plt.axis([0, 23,0,100],facecolor='b')
+		plt.grid(True)
+		plt.savefig(get_current_directory()+'/graph/'+date+'_'+ str(i+1) +'_graph.jpg')
+		log_str=""
+		for j in attribute_label_list[i]:
+			log_str+=j+', '
+		log_str=log_str.rstrip(", ")
+		logger.debug('Graph: '+log_str+' plotted against Time(secs)')
 
 def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 	try:
@@ -396,12 +407,7 @@ if __name__=='__main__':
 				total_lines+=1
 		plot_time_start=time.time()
 		#plotting all graphs
-		plot_graph([column_index['timestamp'],column_index['cpu usage']], timestamp_start,timestamp_end,['CPU Usage(%)'],['timestamp','CPU(%)'],'1')
-		plot_graph([column_index['timestamp'],column_index['cpu load avg']], timestamp_start,timestamp_end,['Average load(per min)'],['timestamp','Average Load'],'2')
-		plot_graph([column_index['timestamp'],column_index['memory']], timestamp_start,timestamp_end,['RAM Usage(%)'],['timestamp','Memory(%)'],'3')
-		plot_graph([column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']], timestamp_start,timestamp_end,['Total Processes','Running Processes','Zombie Processes'],['timestamp','No. of Processes'],'4')
-		plot_graph([column_index['timestamp'],column_index['read speed'],column_index['write speed']], timestamp_start,timestamp_end,['Read Speed(MB/s)','Write Speed(MB/s)'],['timestamp','Disk Operations'],'5')
-		plot_graph([column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']], timestamp_start,timestamp_end,['Egress Speed(MB/s)','Ingress Speed(MB/s)'],['timestamp','Network Speed (MB/s)'],'6')
+		plot_graph([[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]], timestamp_start,timestamp_end,[['CPU Usage(%)'],['Average load(per min)'],['RAM Usage(%)'],['Total Processes','Running Processes','Zombie Processes'],['Read Speed(MB/s)','Write Speed(MB/s)'],['Egress Speed(MB/s)','Ingress Speed(MB/s)']],[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']])
 		plot_time_end=time.time()
 		logger.info('Time taken to plot all graphs: %s secs' %("{0:.2f}".format(plot_time_end-plot_time_start)))
 
