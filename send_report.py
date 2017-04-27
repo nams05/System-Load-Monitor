@@ -1,6 +1,6 @@
 import sys
 from smtplib import SMTPException
-import smtplib #to send email
+import smtplib # to send email
 import os
 import time
 from email.MIMEMultipart import MIMEMultipart
@@ -8,14 +8,14 @@ from email.mime.image import MIMEImage
 from email.MIMEText import MIMEText
 import numpy as np
 import matplotlib.pyplot as plt
-import dotenv #to use .env file
-import inspect #  to get working directory
+import dotenv # to use .env file
+import inspect # to get working directory
 import socket # for hostname
 from urllib2 import urlopen # to get IP address
-import ast #str to appropriate datatype
+import ast # str to appropriate datatype
 import psutil
 import logging
-
+import Tkinter
 
 def check_directory_exists(directory):
 	if not os.path.exists(directory):
@@ -116,7 +116,7 @@ def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg
 		quit()
 
 	if count==0:
-		return 0
+		return attribute_averages
 	for i in range(len(column_number_list)):
 		attribute_averages[i]=float(attribute_averages[i])/count
 	stop=time.time()
@@ -368,7 +368,7 @@ if __name__=='__main__':
 		# logging.basicConfig(filename='file.log',level=logging.DEBUG,format='%(asctime)s [%(levelname)s] %(message)s')
 
 		
-		dotenv.load()
+		dotenv.load(get_current_directory()+'/.env')
 
 		column_index={
 		'timestamp':0,
