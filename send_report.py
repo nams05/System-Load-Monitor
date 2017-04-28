@@ -150,7 +150,7 @@ def get_unique_users(timestamp_start, timestamp_end):
 	return users.rstrip(",") #remove the trailing comma
 
 #produce html code for email body
-def generate_report_table_html(timestamp_start, timestamp_end):
+def generate_report_table_html(column_index_list,timestamp_start, timestamp_end):
 	#current time
 	now=time.time()
 	tm_struct=time.localtime(now)
@@ -199,54 +199,59 @@ def generate_report_table_html(timestamp_start, timestamp_end):
 		</style>
 	</head>
 	<body>'''
-	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()+'''<br>Following table contains various system metrics:<br><br>
-			<table>
+	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()
+	if column_index_list:
+		html+='''<br>Following table contains various system metrics:<br><br>
+				<table>
 
-				<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
-				<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
-			'''	
-	for i in range(0,24):
-		if(timestamp_of_each_hour[i]>timestamp_end):
-			break
-		elif (timestamp_of_each_hour[i]<timestamp_start):
-			continue
-		elif (timestamp_of_each_hour[i]==timestamp_start):
-			hour_timestamp_start=timestamp_of_each_hour[i]
-			hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
-			if(hour_timestamp_end>timestamp_end):
-				hour_timestamp_end=timestamp_end
-		elif (timestamp_of_each_hour[i]>timestamp_start):
-			hour_timestamp_start=timestamp_of_each_hour[i]
-			hour_timestamp_end=get_timestamp_for_next_hour(timestamp_of_each_hour[i])-1
-			if(hour_timestamp_end>timestamp_end):
-				hour_timestamp_end=timestamp_end
-		averages=(calculate_average([column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']], hour_timestamp_start, hour_timestamp_end))
+					<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
+					<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
+				'''	
+		for i in range(0,24):
+			if(timestamp_of_each_hour[i]>timestamp_end):
+				break
+			elif (timestamp_of_each_hour[i]<timestamp_start):
+				continue
+			elif (timestamp_of_each_hour[i]==timestamp_start):
+				hour_timestamp_start=timestamp_of_each_hour[i]
+				hour_timestamp_end=get_timestamp_for_next_hour(hour_timestamp_start)-1
+				if(hour_timestamp_end>timestamp_end):
+					hour_timestamp_end=timestamp_end
+			elif (timestamp_of_each_hour[i]>timestamp_start):
+				hour_timestamp_start=timestamp_of_each_hour[i]
+				hour_timestamp_end=get_timestamp_for_next_hour(timestamp_of_each_hour[i])-1
+				if(hour_timestamp_end>timestamp_end):
+					hour_timestamp_end=timestamp_end
+			averages=(calculate_average(column_index_list, hour_timestamp_start, hour_timestamp_end))
 
-		cpu=float("{0:.2f}".format(averages[0]))
-		load=float("{0:.2f}".format(averages[1]))
-		memory=float("{0:.2f}".format(averages[2]))
-		swap=float("{0:.2f}".format(averages[3]))
-		total_process=int(float("{0:.2f}".format(averages[4])))
-		running=int(float("{0:.2f}".format(averages[5])))
-		zombie=int(float(averages[6]))
-		read=float("{0:.2f}".format(averages[7]))
-		write=float("{0:.2f}".format(averages[8]))
-		egress=float("{0:.2f}".format(averages[9]))
-		ingress=float("{0:.2f}".format(averages[10]))
-		usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
+			cpu=float("{0:.2f}".format(averages[0]))
+			load=float("{0:.2f}".format(averages[1]))
+			memory=float("{0:.2f}".format(averages[2]))
+			swap=float("{0:.2f}".format(averages[3]))
+			total_process=int(float("{0:.2f}".format(averages[4])))
+			running=int(float("{0:.2f}".format(averages[5])))
+			zombie=int(float(averages[6]))
+			read=float("{0:.2f}".format(averages[7]))
+			write=float("{0:.2f}".format(averages[8]))
+			egress=float("{0:.2f}".format(averages[9]))
+			ingress=float("{0:.2f}".format(averages[10]))
+			usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
 
-		if (total_process==0):
-			continue
-		html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
+			if (total_process==0):
+				continue
+			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
 
-	html+="</table><br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
+		html+="</table>"
+	html+="<br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
 	
 	then=time.time()
 	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
 	return html
 
-def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,attribute_label_list,axis_label_list):
+def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,axis_label_list):
+	plot_time_start=time.time()
 	global column_index
+	global graph_label_index
 	date=get_date_from_timestamp(timestamp_start)
 	input_list=[[] for i in range(len(column_index))]
 	unique_columns=set([])
@@ -272,6 +277,7 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,attribut
 						input_list[i].append(new_tuple[i])
 	except IOError as e:
 		logger.exception(str(e))
+		quit()
 
 	## plot graph using input_list
 	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
@@ -284,7 +290,7 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,attribut
 		plt.rcParams["figure.figsize"] = fig_size
 		graph_name=[]
 		for j in range(1,len(list_of_column_number_list[i])):
-			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_number_list[i][j]],'r',label=attribute_label_list[i][j-1])) # plotting each attribute against time
+			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_number_list[i][j]],'r',label=graph_label_index[list_of_column_number_list[i][j]])) # plotting each attribute against time
 		# plt.xticks(np.arange(0, 24 , 2))
 		# plt.yticks(np.arange(0, 110 , 10))
 		for j in range(len(graph_name)):
@@ -296,12 +302,15 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,attribut
 		plt.grid(True)
 		plt.savefig(get_current_directory()+'/graph/'+date+'_'+ str(i+1) +'_graph.jpg')
 		log_str=""
-		for j in attribute_label_list[i]:
-			log_str+=j+', '
+		for j in range(1,len(list_of_column_number_list[i])):
+			log_str+=graph_label_index[list_of_column_number_list[i][j]]+', '
 		log_str=log_str.rstrip(", ")
 		logger.debug('Graph: '+log_str+' plotted against Time(secs)')
 
-def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
+	plot_time_end=time.time()
+	logger.info('Time taken to plot all graphs: %s secs' %("{0:.2f}".format(plot_time_end-plot_time_start)))
+
+def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body,total_attachments):
 	try:
 		start_time=time.time()
 		dir= get_current_directory()
@@ -316,7 +325,7 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		html_part=MIMEText(html_body,'html')
 		msg.attach(html_part)
 
-		for i in range(1,7):
+		for i in range(1,total_attachments+1):
 			img_data = open(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg', 'rb').read()
 			image= MIMEImage(img_data, name=os.path.basename(dir+'/graph/'+date+'_'+str(i)+'_graph.jpg'))
 			image.add_header('Content-ID', '<image'+str(i)+'>')
@@ -350,12 +359,40 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body):
 		logger.exception(str(e))
 		quit()
 
+def main(timestamp_start,timestamp_end,column_number_list,list_of_column_number_list,axis_label_list):
+	try:
+		dotenv.load(get_current_directory()+'/.env')
+		start_time=time.time()
+		date=get_date_from_timestamp(timestamp_start)
+
+		#plotting all graphs
+		plot_graph(list_of_column_number_list, timestamp_start,timestamp_end,axis_label_list)
+		total_attachments=len(list_of_column_number_list)
+		# compose the email
+		fromaddr = dotenv.get("From")
+		toaddr = dotenv.get("To")
+		cc = dotenv.get("Cc")
+		bcc = dotenv.get("Bcc")
+		rcpt =[cc] + [bcc] + [toaddr]
+		
+		html_body =(generate_report_table_html(column_number_list,timestamp_start,timestamp_end))
+		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body,total_attachments)
+		end_time=time.time()
+		logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
+
+	except Exception,e:
+		logger.exception(str(e))
+		end_time=time.time()
+		logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
+		quit()
+
 
 #<===========================================================MAIN PROGRAM=============================================================>
 
 if __name__=='__main__':
 	try:
 		start_time=time.time()
+		check_directory_exists(get_current_directory()+'/log')
 
 		if len(sys.argv)>1:
 			timestamp_of_each_hour=get_timestamp_of_each_hour(int(sys.argv[1]))
@@ -368,7 +405,6 @@ if __name__=='__main__':
 
 		date=get_date_from_timestamp(timestamp_start)
 
-		check_directory_exists(get_current_directory()+'/log')
 		#initialize logger
 		logger=logging.getLogger(__name__)
 		logger.setLevel(logging.DEBUG)
@@ -378,25 +414,34 @@ if __name__=='__main__':
 		logger.addHandler(file_handler)
 		# logging.basicConfig(filename='file.log',level=logging.DEBUG,format='%(asctime)s [%(levelname)s] %(message)s')
 
-		
-		dotenv.load(get_current_directory()+'/.env')
-
 		column_index={
-		'timestamp':0,
-		'cpu usage':1,
-		'cpu load avg':2,
-		'memory':3,
-		'swap':4,
-		'total process':5,
-		'running process':6,
-		'zombie process':7,
-		'read speed':8,
-		'write speed':9,
-		'egress speed':10,
-		'ingress speed':11,
-		'usernames':12
+			'timestamp':0,
+			'cpu usage':1,
+			'cpu load avg':2,
+			'memory':3,
+			'swap':4,
+			'total process':5,
+			'running process':6,
+			'zombie process':7,
+			'read speed':8,
+			'write speed':9,
+			'egress speed':10,
+			'ingress speed':11,
+			'usernames':12
+			}
+		graph_label_index={
+		1:'CPU Usage(%)',
+		2:'Average load(per min)',
+		3:'RAM Usage(%)',
+		4:'Swap Memory(%)',
+		5:'Total Processes',
+		6:'Running Processes',
+		7:'Zombie Processes',
+		8:'Read Speed(MB/s)',
+		9:'Write Speed(MB/s)',
+		10:'Egress Speed(MB/s)',
+		11:'Ingress Speed(MB/s)'
 		}
-
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
 			line_offset = []
 			offset = 0
@@ -405,21 +450,14 @@ if __name__=='__main__':
 				line_offset.append(offset)
 				offset += len(line)
 				total_lines+=1
-		plot_time_start=time.time()
-		#plotting all graphs
-		plot_graph([[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]], timestamp_start,timestamp_end,[['CPU Usage(%)'],['Average load(per min)'],['RAM Usage(%)'],['Total Processes','Running Processes','Zombie Processes'],['Read Speed(MB/s)','Write Speed(MB/s)'],['Egress Speed(MB/s)','Ingress Speed(MB/s)']],[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']])
-		plot_time_end=time.time()
-		logger.info('Time taken to plot all graphs: %s secs' %("{0:.2f}".format(plot_time_end-plot_time_start)))
 
-		# compose the email
-		fromaddr = dotenv.get("From")
-		toaddr = dotenv.get("To")
-		cc = dotenv.get("Cc")
-		bcc = dotenv.get("Bcc")
-		rcpt =[cc] + [bcc] + [toaddr]
-		html_body =(generate_report_table_html(timestamp_start,timestamp_end))
-		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body)
+		column_number_list=[[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']]
+		
+		list_of_column_number_list=[[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]]
 
+		axis_label_list=[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']]
+
+		main(timestamp_start,timestamp_end,column_number_list,list_of_column_number_list,axis_label_list)
 		end_time=time.time()
 		logger.info('Finished execution in %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 	except Exception,e:
@@ -427,4 +465,3 @@ if __name__=='__main__':
 		end_time=time.time()
 		logger.info('Finished execution in %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 		quit()
-
