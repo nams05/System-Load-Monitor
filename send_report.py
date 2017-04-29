@@ -111,6 +111,8 @@ def calculate_average(column_index_list, timestamp_start, timestamp_end): # avg 
 					break
 				elif (new_tuple[0]>=timestamp_start):
 					for i in range(len(column_index_list)):
+						if column_index_list[i]==12:
+							continue
 						attribute_averages[i]+=new_tuple[column_index_list[i]]
 					count+=1
 	except IOError as e:
@@ -120,7 +122,12 @@ def calculate_average(column_index_list, timestamp_start, timestamp_end): # avg 
 	if count==0:
 		return attribute_averages
 	for i in range(len(column_index_list)):
-		attribute_averages[i]=float(attribute_averages[i])/count
+		if column_index_list[i]==12:
+			attribute_averages[i]=get_unique_users(timestamp_start,timestamp_end)
+			continue
+		attribute_averages[i]=attribute_averages[i]/count
+		if type(attribute_averages[i])==float:
+			attribute_averages[i]=float("{0:.2f}".format(attribute_averages[i]))
 	stop=time.time()
 	logger.info('Time taken to execute calculate_average(): %s secs' %"{0:.2f}".format(stop-start))
 	return attribute_averages
@@ -152,14 +159,14 @@ def get_unique_users(timestamp_start, timestamp_end):
 	return users.rstrip(",") #remove the trailing comma
 
 #produce html code for email body
-def generate_report_table_html(column_index_list,timestamp_start, timestamp_end):
+def generate_report_table_html(column_index_list,timestamp_start, timestamp_end,total_attachments):
 	#current time
 	now=time.time()
 	tm_struct=time.localtime(now)
 	mail_time=time.strftime("%I:%M:%S %p",tm_struct) # time in 12hour format
 	used_disk,free_disk=get_disk_usage()
 	total_memory=get_total_memory()
-
+	global graph_label_index
 	date=get_date_from_timestamp(now) # eg 03 Apr 2017
 	html='''<!DOCTYPE html>
 	<html>
@@ -204,11 +211,10 @@ def generate_report_table_html(column_index_list,timestamp_start, timestamp_end)
 	html+="Mail triggered at: "+ date+" "+mail_time+"<br>Hostname: "+ get_hostname()+"<br>Public IP: "+get_public_ip()
 	if column_index_list:
 		html+='''<br>Following table contains various system metrics:<br><br>
-				<table>
-
-					<tr><th rowspan="2">Time (hours)</th><th colspan="2">CPU </th><th rowspan="2">Memory ('''+str(int(total_memory))+'''MB) (Percentage)</th><th rowspan="2">Swap (Percentage)</th><th colspan="3">Processes</th><th colspan="2">Disk (Used= '''+str(int(used_disk))+"MB Free= "+str(int(free_disk))+'''MB)</th><th colspan="2">Network</th><th rowspan="2">Users</th></tr>
-					<tr><th>Percentage</th><th>Load Average</th><th>Total</th><th>Running</th><th>Zombie</th><th>Read (MB/s)</th><th>Write (MB/s)</th><th>Egress (MB/s)</th><th>Ingress (MB/s)</th></tr>
-				'''	
+				<table><tr><th>Time (hours)</th>'''
+		for i in column_index_list:
+			html+="<th>"+graph_label_index[i]+"</th>"
+		html+="</tr>"	
 		for i in range(0,24):
 			if(timestamp_of_each_hour[i]>timestamp_end):
 				break
@@ -226,25 +232,21 @@ def generate_report_table_html(column_index_list,timestamp_start, timestamp_end)
 					hour_timestamp_end=timestamp_end
 			averages=(calculate_average(column_index_list, hour_timestamp_start, hour_timestamp_end))
 
-			cpu=float("{0:.2f}".format(averages[0]))
-			load=float("{0:.2f}".format(averages[1]))
-			memory=float("{0:.2f}".format(averages[2]))
-			swap=float("{0:.2f}".format(averages[3]))
-			total_process=int(float("{0:.2f}".format(averages[4])))
-			running=int(float("{0:.2f}".format(averages[5])))
-			zombie=int(float(averages[6]))
-			read=float("{0:.2f}".format(averages[7]))
-			write=float("{0:.2f}".format(averages[8]))
-			egress=float("{0:.2f}".format(averages[9]))
-			ingress=float("{0:.2f}".format(averages[10]))
-			usernames=get_unique_users(hour_timestamp_start, hour_timestamp_end)
-
-			if (total_process==0):
+			if (averages[0]==0):
 				continue
-			html+="<tr><td style=\"background-color:#7C7474\" >"+str(i)+"</td><td style=\"background-color:"+color(cpu)+"\">"+str(cpu)+"</td><td style=\"background-color:"+color(load*20)+"\">"+str(load)+"</td><td style=\"background-color:"+color(memory)+"\">"+str(memory)+"</td><td style=\"background-color:"+color(swap)+"\">"+str(swap)+"</td><td style=\"background-color:"+color(total_process*10)+"\">"+str(total_process)+"</td><td style=\"background-color:"+color(running/total_process*100)+"\">"+str(running)+"</td><td style=\"background-color:"+color(zombie/total_process*100)+"\">"+str(zombie)+"</td><td style=\"background-color:"+color(read*20)+"\">"+str(read)+"</td><td style=\"background-color:"+color(write*20)+"\">"+str(write)+"</td><td style=\"background-color:"+color(egress*20)+"\">"+str(egress)+"</td><td style=\"background-color:"+color(ingress*20)+"\">"+str(ingress)+"</td><td style=\"background-color:"+color(usernames)+"\">"+usernames+"</td></tr>"
+			html+="<tr>"
+			html+="<td style=\"background-color:#7C7474\">"+str(i)+"</td>"
+			for j in averages:
+				html+="<td style=\"background-color:"+color(j)+"\">"+str(j)+"</td>"
 
-		html+="</table>"
-	html+="<br><br><img style=\"float:left\" src=\"cid:image1\"><img src=\"cid:image2\" style=\"float:right\"><img src=\"cid:image3\" style=\"float:left\"><img src=\"cid:image4\" style=\"float:right\"><img src=\"cid:image5\" style=\"float:left\"><img src=\"cid:image6\" style=\"float:right\"></body></html>"
+			html+="</tr>"
+		html+="</table><br><br>"
+	for i in range(total_attachments):
+		if (i+1)&1:
+			html+="<img style=\"float:left\" src=\"cid:image"+str(i+1)+"\">"
+		else:
+			html+="<img src=\"cid:image"+str(i+1)+"\" style=\"float:right\">"
+	html+="</body></html>"
 	
 	then=time.time()
 	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
@@ -256,10 +258,10 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 	global graph_label_index
 	date=get_date_from_timestamp(timestamp_start)
 	input_list=[[] for i in range(len(column_index))]
-	unique_columns=set([])
+	unique_columns=[column_index['timestamp']]
 	for i in range(len(list_of_column_index_list)):
 		for j in range(len(list_of_column_index_list[i])):
-			unique_columns.add(list_of_column_index_list[i][j])
+			unique_columns.append(list_of_column_index_list[i][j])
 
 	## read file according to column number , segregate into lists
 	try:
@@ -277,6 +279,7 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 				# segregate into lists
 					for i in unique_columns:
 						input_list[i].append(new_tuple[i])
+		print input_list 
 	except IOError as e:
 		logger.exception(str(e))
 		quit()
@@ -377,7 +380,7 @@ def main(timestamp_start,timestamp_end,column_index_list,list_of_column_index_li
 		bcc = dotenv.get("Bcc")
 		rcpt =[cc] + [bcc] + [toaddr]
 		
-		html_body =(generate_report_table_html(column_index_list,timestamp_start,timestamp_end))
+		html_body =(generate_report_table_html(column_index_list,timestamp_start,timestamp_end,total_attachments))
 		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body,total_attachments)
 		end_time=time.time()
 		logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
@@ -429,21 +432,23 @@ if __name__=='__main__':
 			'write speed':9,
 			'egress speed':10,
 			'ingress speed':11,
-			'usernames':12
+			'users':12
 			}
 
 		graph_label_index={
-		1:'CPU Usage(%)',
-		2:'Average load(per min)',
-		3:'RAM Usage(%)',
-		4:'Swap Memory(%)',
+		0:'Time',
+		1:'CPU Percentage',
+		2:'Average load (per min)',
+		3:'RAM Usage (%)',
+		4:'Swap Memory (%)',
 		5:'Total Processes',
 		6:'Running Processes',
 		7:'Zombie Processes',
-		8:'Read Speed(MB/s)',
-		9:'Write Speed(MB/s)',
-		10:'Egress Speed(MB/s)',
-		11:'Ingress Speed(MB/s)'
+		8:'Read Speed (MB/s)',
+		9:'Write Speed (MB/s)',
+		10:'Egress Speed (MB/s)',
+		11:'Ingress Speed (MB/s)',
+		12:'Users'
 		}
 
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
@@ -457,60 +462,60 @@ if __name__=='__main__':
 
 		config = ConfigParser.RawConfigParser()
 		config.read('config.ini')
-		column_index_list=[];list_of_column_index_list=[];axis_label_list=set([]);
-		if config.getboolean('Report','report'):
-			if config.getboolean('Graph','report.graph'):
-				if config.getboolean('Graph','report.graph.cpu'):
-					if config.getboolean('Graph','report.graph.cpu.percent'):
-						list_of_column_index_list.append([column_index['timestamp'],column_index['cpu usage']])
-						axis_label_list.append(['timestamp','CPU(%)'])
-					if config.boolean('Graph','report.graph.cpu.load_avg'):
-						list_of_column_index_list([column_index['timestamp'],column_index['cpu load avg']])
-						axis_label_list.append(['timestamp','Average Load'])
+		# column_index_list=[];list_of_column_index_list=[];axis_label_list=set([]);
+		# if config.getboolean('Report','report'):
+		# 	if config.getboolean('Graph','report.graph'):
+		# 		if config.getboolean('Graph','report.graph.cpu'):
+		# 			if config.getboolean('Graph','report.graph.cpu.percent'):
+		# 				list_of_column_index_list.append([column_index['timestamp'],column_index['cpu usage']])
+		# 				axis_label_list.append(['timestamp','CPU(%)'])
+		# 			if config.boolean('Graph','report.graph.cpu.load_avg'):
+		# 				list_of_column_index_list([column_index['timestamp'],column_index['cpu load avg']])
+		# 				axis_label_list.append(['timestamp','Average Load'])
 
-				if config.getboolean('Graph','report.graph.memory'):
-					temp=[column_index['timestamp']]
-					if config.getboolean('Graph','report.graph.memory.ram'):
-						temp.append(column_index['memory'])
-					if config.boolean('Graph','report.graph.memory.swap'):
-						temp.append(column_index['swap'])
-					if config.getboolean('Graph','report.graph.memory.ram') or config.getboolean('Graph','report.graph.memory.swap'):
-						axis_label_list.append(['timestamp','Memory(%)'])
+		# 		if config.getboolean('Graph','report.graph.memory'):
+		# 			temp=[column_index['timestamp']]
+		# 			if config.getboolean('Graph','report.graph.memory.ram'):
+		# 				temp.append(column_index['memory'])
+		# 			if config.boolean('Graph','report.graph.memory.swap'):
+		# 				temp.append(column_index['swap'])
+		# 			if config.getboolean('Graph','report.graph.memory.ram') or config.getboolean('Graph','report.graph.memory.swap'):
+		# 				axis_label_list.append(['timestamp','Memory(%)'])
 
-				if config.getboolean('Graph','report.graph.processes'):
-					if config.getboolean('Graph','report.graph.processes.total'):
-						column_index_list.append(column_index['total process'])
-					if config.getboolean('Graph','report.graph.processes.running'):
-						column_index_list.append(column_index['running process'])
-					if config.getboolean('Graph','report.graph.processes.zombie'):
-						column_index_list.append(column_index['zombie process'])
-					if config.getboolean('Graph','report.graph.processes.total') or config.getboolean('Graph','report.graph.processes.running') or config.getboolean('Graph','report.graph.processes.zombie') :
-						axis_label_list.append(['timestamp','No. of Processes'])
+		# 		if config.getboolean('Graph','report.graph.processes'):
+		# 			if config.getboolean('Graph','report.graph.processes.total'):
+		# 				column_index_list.append(column_index['total process'])
+		# 			if config.getboolean('Graph','report.graph.processes.running'):
+		# 				column_index_list.append(column_index['running process'])
+		# 			if config.getboolean('Graph','report.graph.processes.zombie'):
+		# 				column_index_list.append(column_index['zombie process'])
+		# 			if config.getboolean('Graph','report.graph.processes.total') or config.getboolean('Graph','report.graph.processes.running') or config.getboolean('Graph','report.graph.processes.zombie') :
+		# 				axis_label_list.append(['timestamp','No. of Processes'])
 	
-				if config.getboolean('Graph','report.graph.disk_speed'):
-					if config.getboolean('Graph','report.graph.disk_speed.read'):
-						column_index_list.append(column_index['read speed'])
-					if config.boolean('Graph','report.graph.disk_speed.write'):
-						column_index_list.append(column_index['write speed'])
-					if config.getboolean('Graph','report.graph.disk_speed.read') or config.getboolean('Graph','report.graph.disk_speed.write'):
-						axis_label_list.append(['timestamp','Disk Operations'])
+		# 		if config.getboolean('Graph','report.graph.disk_speed'):
+		# 			if config.getboolean('Graph','report.graph.disk_speed.read'):
+		# 				column_index_list.append(column_index['read speed'])
+		# 			if config.boolean('Graph','report.graph.disk_speed.write'):
+		# 				column_index_list.append(column_index['write speed'])
+		# 			if config.getboolean('Graph','report.graph.disk_speed.read') or config.getboolean('Graph','report.graph.disk_speed.write'):
+		# 				axis_label_list.append(['timestamp','Disk Operations'])
 				
-				if config.getboolean('Graph','report.graph.network_speed'):
-					if config.getboolean('Graph','report.graph.network_speed.egress'):
-						column_index_list.append(column_index['egress speed'])
-					if config.boolean('Graph','report.graph.network_speed.ingress'):
-						column_index_list.append(column_index['ingress speed'])
-					if config.getboolean('Graph','report.graph.network_speed.egress') orconfig.getboolean('Graph','report.graph.network_speed.ingress'):
-						axis_label_list.append(['timestamp','Network Speed (MB/s)'])
+		# 		if config.getboolean('Graph','report.graph.network_speed'):
+		# 			if config.getboolean('Graph','report.graph.network_speed.egress'):
+		# 				column_index_list.append(column_index['egress speed'])
+		# 			if config.boolean('Graph','report.graph.network_speed.ingress'):
+		# 				column_index_list.append(column_index['ingress speed'])
+		# 			if config.getboolean('Graph','report.graph.network_speed.egress') orconfig.getboolean('Graph','report.graph.network_speed.ingress'):
+		# 				axis_label_list.append(['timestamp','Network Speed (MB/s)'])
 
-				column_index_list.append(column_index['cpu usage'])
-				column_index_list.append(column_index['cpu load avg'])
-				column_index_list.append(column_index['memory'])
-				column_index_list.append(column_index['swap'])
+		# 		column_index_list.append(column_index['cpu usage'])
+		# 		column_index_list.append(column_index['cpu load avg'])
+		# 		column_index_list.append(column_index['memory'])
+		# 		column_index_list.append(column_index['swap'])
+		# else:
+		column_index_list=[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed'],column_index['users']]
 
-		column_index_list=[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']]
-
-		list_of_column_index_list=[[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory'],column_index['swap']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]]
+		list_of_column_index_list=[[column_index['cpu usage']],[column_index['cpu load avg']],[column_index['memory'],column_index['swap']],[column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['read speed'],column_index['write speed']],[column_index['egress speed'],column_index['ingress speed']]]
 
 		axis_label_list=[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']]
 
