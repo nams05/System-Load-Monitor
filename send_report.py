@@ -16,6 +16,8 @@ import ast # str to appropriate datatype
 import psutil
 import logging
 import Tkinter
+import ConfigParser
+import sets
 
 def check_directory_exists(directory):
 	if not os.path.exists(directory):
@@ -88,12 +90,12 @@ def binary_search(key,start,end):
 	else:
 			return None
 
-def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
+def calculate_average(column_index_list, timestamp_start, timestamp_end): # avg of the interval timestamp_end - timestamp_start
 	#intialize local variable
 	start=time.time()
 	global total_lines
 	global line_offset
-	attribute_averages=[0 for i in range(len(column_number_list))]
+	attribute_averages=[0 for i in range(len(column_index_list))]
 	count=0
 	try:
 		#read file
@@ -108,8 +110,8 @@ def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg
 				if (new_tuple[0])>timestamp_end :
 					break
 				elif (new_tuple[0]>=timestamp_start):
-					for i in range(len(column_number_list)):
-						attribute_averages[i]+=new_tuple[column_number_list[i]]
+					for i in range(len(column_index_list)):
+						attribute_averages[i]+=new_tuple[column_index_list[i]]
 					count+=1
 	except IOError as e:
 		logger.exception(str(e))
@@ -117,7 +119,7 @@ def calculate_average(column_number_list, timestamp_start, timestamp_end): # avg
 
 	if count==0:
 		return attribute_averages
-	for i in range(len(column_number_list)):
+	for i in range(len(column_index_list)):
 		attribute_averages[i]=float(attribute_averages[i])/count
 	stop=time.time()
 	logger.info('Time taken to execute calculate_average(): %s secs' %"{0:.2f}".format(stop-start))
@@ -248,16 +250,16 @@ def generate_report_table_html(column_index_list,timestamp_start, timestamp_end)
 	logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name, "{0:.2f}".format(then-now)))
 	return html
 
-def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,axis_label_list):
+def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_label_list):
 	plot_time_start=time.time()
 	global column_index
 	global graph_label_index
 	date=get_date_from_timestamp(timestamp_start)
 	input_list=[[] for i in range(len(column_index))]
 	unique_columns=set([])
-	for i in range(len(list_of_column_number_list)):
-		for j in range(len(list_of_column_number_list[i])):
-			unique_columns.add(list_of_column_number_list[i][j])
+	for i in range(len(list_of_column_index_list)):
+		for j in range(len(list_of_column_index_list[i])):
+			unique_columns.add(list_of_column_index_list[i][j])
 
 	## read file according to column number , segregate into lists
 	try:
@@ -281,7 +283,7 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,axis_lab
 
 	## plot graph using input_list
 	graphline_color={0:'r',1:'g',2:'b',3:'m'} # color of the graph lines
-	for i in range(len(list_of_column_number_list)):
+	for i in range(len(list_of_column_index_list)):
 		plt.close('all')
 		#set size of the graph image
 		fig_size = plt.rcParams["figure.figsize"]
@@ -289,8 +291,8 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,axis_lab
 		fig_size[1] = 10
 		plt.rcParams["figure.figsize"] = fig_size
 		graph_name=[]
-		for j in range(1,len(list_of_column_number_list[i])):
-			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_number_list[i][j]],'r',label=graph_label_index[list_of_column_number_list[i][j]])) # plotting each attribute against time
+		for j in range(1,len(list_of_column_index_list[i])):
+			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_index_list[i][j]],'r',label=graph_label_index[list_of_column_index_list[i][j]])) # plotting each attribute against time
 		# plt.xticks(np.arange(0, 24 , 2))
 		# plt.yticks(np.arange(0, 110 , 10))
 		for j in range(len(graph_name)):
@@ -302,8 +304,8 @@ def plot_graph(list_of_column_number_list,timestamp_start,timestamp_end,axis_lab
 		plt.grid(True)
 		plt.savefig(get_current_directory()+'/graph/'+date+'_'+ str(i+1) +'_graph.jpg')
 		log_str=""
-		for j in range(1,len(list_of_column_number_list[i])):
-			log_str+=graph_label_index[list_of_column_number_list[i][j]]+', '
+		for j in range(1,len(list_of_column_index_list[i])):
+			log_str+=graph_label_index[list_of_column_index_list[i][j]]+', '
 		log_str=log_str.rstrip(", ")
 		logger.debug('Graph: '+log_str+' plotted against Time(secs)')
 
@@ -359,15 +361,15 @@ def send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body,total_attachments):
 		logger.exception(str(e))
 		quit()
 
-def main(timestamp_start,timestamp_end,column_number_list,list_of_column_number_list,axis_label_list):
+def main(timestamp_start,timestamp_end,column_index_list,list_of_column_index_list,axis_label_list):
 	try:
 		dotenv.load(get_current_directory()+'/.env')
 		start_time=time.time()
 		date=get_date_from_timestamp(timestamp_start)
 
 		#plotting all graphs
-		plot_graph(list_of_column_number_list, timestamp_start,timestamp_end,axis_label_list)
-		total_attachments=len(list_of_column_number_list)
+		plot_graph(list_of_column_index_list, timestamp_start,timestamp_end,axis_label_list)
+		total_attachments=len(list_of_column_index_list)
 		# compose the email
 		fromaddr = dotenv.get("From")
 		toaddr = dotenv.get("To")
@@ -375,7 +377,7 @@ def main(timestamp_start,timestamp_end,column_number_list,list_of_column_number_
 		bcc = dotenv.get("Bcc")
 		rcpt =[cc] + [bcc] + [toaddr]
 		
-		html_body =(generate_report_table_html(column_number_list,timestamp_start,timestamp_end))
+		html_body =(generate_report_table_html(column_index_list,timestamp_start,timestamp_end))
 		send_mail(date,fromaddr,toaddr,cc,bcc,rcpt,html_body,total_attachments)
 		end_time=time.time()
 		logger.info('Time taken to execute %s(): %s secs' %(inspect.currentframe().f_code.co_name,"{0:.2f}".format(end_time-start_time)))
@@ -429,6 +431,7 @@ if __name__=='__main__':
 			'ingress speed':11,
 			'usernames':12
 			}
+
 		graph_label_index={
 		1:'CPU Usage(%)',
 		2:'Average load(per min)',
@@ -442,6 +445,7 @@ if __name__=='__main__':
 		10:'Egress Speed(MB/s)',
 		11:'Ingress Speed(MB/s)'
 		}
+
 		with open(get_current_directory()+'/data/'+date+'.txt') as file:
 			line_offset = []
 			offset = 0
@@ -451,13 +455,66 @@ if __name__=='__main__':
 				offset += len(line)
 				total_lines+=1
 
-		column_number_list=[[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']]
-		
-		list_of_column_number_list=[[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]]
+		config = ConfigParser.RawConfigParser()
+		config.read('config.ini')
+		column_index_list=[];list_of_column_index_list=[];axis_label_list=set([]);
+		if config.getboolean('Report','report'):
+			if config.getboolean('Graph','report.graph'):
+				if config.getboolean('Graph','report.graph.cpu'):
+					if config.getboolean('Graph','report.graph.cpu.percent'):
+						list_of_column_index_list.append([column_index['timestamp'],column_index['cpu usage']])
+						axis_label_list.append(['timestamp','CPU(%)'])
+					if config.boolean('Graph','report.graph.cpu.load_avg'):
+						list_of_column_index_list([column_index['timestamp'],column_index['cpu load avg']])
+						axis_label_list.append(['timestamp','Average Load'])
+
+				if config.getboolean('Graph','report.graph.memory'):
+					temp=[column_index['timestamp']]
+					if config.getboolean('Graph','report.graph.memory.ram'):
+						temp.append(column_index['memory'])
+					if config.boolean('Graph','report.graph.memory.swap'):
+						temp.append(column_index['swap'])
+					if config.getboolean('Graph','report.graph.memory.ram') or config.getboolean('Graph','report.graph.memory.swap'):
+						axis_label_list.append(['timestamp','Memory(%)'])
+
+				if config.getboolean('Graph','report.graph.processes'):
+					if config.getboolean('Graph','report.graph.processes.total'):
+						column_index_list.append(column_index['total process'])
+					if config.getboolean('Graph','report.graph.processes.running'):
+						column_index_list.append(column_index['running process'])
+					if config.getboolean('Graph','report.graph.processes.zombie'):
+						column_index_list.append(column_index['zombie process'])
+					if config.getboolean('Graph','report.graph.processes.total') or config.getboolean('Graph','report.graph.processes.running') or config.getboolean('Graph','report.graph.processes.zombie') :
+						axis_label_list.append(['timestamp','No. of Processes'])
+	
+				if config.getboolean('Graph','report.graph.disk_speed'):
+					if config.getboolean('Graph','report.graph.disk_speed.read'):
+						column_index_list.append(column_index['read speed'])
+					if config.boolean('Graph','report.graph.disk_speed.write'):
+						column_index_list.append(column_index['write speed'])
+					if config.getboolean('Graph','report.graph.disk_speed.read') or config.getboolean('Graph','report.graph.disk_speed.write'):
+						axis_label_list.append(['timestamp','Disk Operations'])
+				
+				if config.getboolean('Graph','report.graph.network_speed'):
+					if config.getboolean('Graph','report.graph.network_speed.egress'):
+						column_index_list.append(column_index['egress speed'])
+					if config.boolean('Graph','report.graph.network_speed.ingress'):
+						column_index_list.append(column_index['ingress speed'])
+					if config.getboolean('Graph','report.graph.network_speed.egress') orconfig.getboolean('Graph','report.graph.network_speed.ingress'):
+						axis_label_list.append(['timestamp','Network Speed (MB/s)'])
+
+				column_index_list.append(column_index['cpu usage'])
+				column_index_list.append(column_index['cpu load avg'])
+				column_index_list.append(column_index['memory'])
+				column_index_list.append(column_index['swap'])
+
+		column_index_list=[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed']]
+
+		list_of_column_index_list=[[column_index['timestamp'],column_index['cpu usage']],[column_index['timestamp'],column_index['cpu load avg']],[column_index['timestamp'],column_index['memory'],column_index['swap']],[column_index['timestamp'],column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['timestamp'],column_index['read speed'],column_index['write speed']],[column_index['timestamp'],column_index['egress speed'],column_index['ingress speed']]]
 
 		axis_label_list=[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']]
 
-		main(timestamp_start,timestamp_end,column_number_list,list_of_column_number_list,axis_label_list)
+		main(timestamp_start,timestamp_end,column_index_list,list_of_column_index_list,axis_label_list)
 		end_time=time.time()
 		logger.info('Finished execution in %s secs\n' %("{0:.2f}".format(end_time-start_time)))
 	except Exception,e:
