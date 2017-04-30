@@ -16,7 +16,7 @@ import ast # str to appropriate datatype
 import psutil
 import logging
 import Tkinter
-import ConfigParser
+from configobj import ConfigObj
 import sets
 
 def check_directory_exists(directory):
@@ -279,7 +279,6 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 				# segregate into lists
 					for i in unique_columns:
 						input_list[i].append(new_tuple[i])
-		print input_list 
 	except IOError as e:
 		logger.exception(str(e))
 		quit()
@@ -294,7 +293,7 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 		fig_size[1] = 10
 		plt.rcParams["figure.figsize"] = fig_size
 		graph_name=[]
-		for j in range(1,len(list_of_column_index_list[i])):
+		for j in range(len(list_of_column_index_list[i])):
 			graph_name.append(plt.plot(input_list[0],input_list[list_of_column_index_list[i][j]],'r',label=graph_label_index[list_of_column_index_list[i][j]])) # plotting each attribute against time
 		# plt.xticks(np.arange(0, 24 , 2))
 		# plt.yticks(np.arange(0, 110 , 10))
@@ -460,8 +459,7 @@ if __name__=='__main__':
 				offset += len(line)
 				total_lines+=1
 
-		config = ConfigParser.RawConfigParser()
-		config.read('config.ini')
+		config = ConfigObj('config.ini')
 		# column_index_list=[];list_of_column_index_list=[];axis_label_list=set([]);
 		# if config.getboolean('Report','report'):
 		# 	if config.getboolean('Graph','report.graph'):
