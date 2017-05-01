@@ -300,8 +300,8 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 		for j in range(len(graph_name)):
 			plt.setp(graph_name[j],color=graphline_color[j], linewidth=1.0)
 		plt.legend(loc='upper right')
-		plt.xlabel(axis_label_list[i][0])
-		plt.ylabel(axis_label_list[i][1])
+		plt.xlabel('Timestamp')
+		plt.ylabel(axis_label_list[j])
 		# plt.axis([0, 23,0,100],facecolor='b')
 		plt.grid(True)
 		plt.savefig(get_current_directory()+'/graph/'+date+'_'+ str(i+1) +'_graph.jpg')
@@ -460,62 +460,31 @@ if __name__=='__main__':
 				total_lines+=1
 
 		config = ConfigObj('config.ini')
-		# column_index_list=[];list_of_column_index_list=[];axis_label_list=set([]);
-		# if config.getboolean('Report','report'):
-		# 	if config.getboolean('Graph','report.graph'):
-		# 		if config.getboolean('Graph','report.graph.cpu'):
-		# 			if config.getboolean('Graph','report.graph.cpu.percent'):
-		# 				list_of_column_index_list.append([column_index['timestamp'],column_index['cpu usage']])
-		# 				axis_label_list.append(['timestamp','CPU(%)'])
-		# 			if config.boolean('Graph','report.graph.cpu.load_avg'):
-		# 				list_of_column_index_list([column_index['timestamp'],column_index['cpu load avg']])
-		# 				axis_label_list.append(['timestamp','Average Load'])
+		column_index_list=[]
+		i=1
+		for section in config['Table']:
+			for sub_section in config['Table'][section]:
+				if config['Table'][section].as_bool(sub_section) == True:
+					column_index_list.append(i)
+				i+=1
 
-		# 		if config.getboolean('Graph','report.graph.memory'):
-		# 			temp=[column_index['timestamp']]
-		# 			if config.getboolean('Graph','report.graph.memory.ram'):
-		# 				temp.append(column_index['memory'])
-		# 			if config.boolean('Graph','report.graph.memory.swap'):
-		# 				temp.append(column_index['swap'])
-		# 			if config.getboolean('Graph','report.graph.memory.ram') or config.getboolean('Graph','report.graph.memory.swap'):
-		# 				axis_label_list.append(['timestamp','Memory(%)'])
-
-		# 		if config.getboolean('Graph','report.graph.processes'):
-		# 			if config.getboolean('Graph','report.graph.processes.total'):
-		# 				column_index_list.append(column_index['total process'])
-		# 			if config.getboolean('Graph','report.graph.processes.running'):
-		# 				column_index_list.append(column_index['running process'])
-		# 			if config.getboolean('Graph','report.graph.processes.zombie'):
-		# 				column_index_list.append(column_index['zombie process'])
-		# 			if config.getboolean('Graph','report.graph.processes.total') or config.getboolean('Graph','report.graph.processes.running') or config.getboolean('Graph','report.graph.processes.zombie') :
-		# 				axis_label_list.append(['timestamp','No. of Processes'])
-	
-		# 		if config.getboolean('Graph','report.graph.disk_speed'):
-		# 			if config.getboolean('Graph','report.graph.disk_speed.read'):
-		# 				column_index_list.append(column_index['read speed'])
-		# 			if config.boolean('Graph','report.graph.disk_speed.write'):
-		# 				column_index_list.append(column_index['write speed'])
-		# 			if config.getboolean('Graph','report.graph.disk_speed.read') or config.getboolean('Graph','report.graph.disk_speed.write'):
-		# 				axis_label_list.append(['timestamp','Disk Operations'])
-				
-		# 		if config.getboolean('Graph','report.graph.network_speed'):
-		# 			if config.getboolean('Graph','report.graph.network_speed.egress'):
-		# 				column_index_list.append(column_index['egress speed'])
-		# 			if config.boolean('Graph','report.graph.network_speed.ingress'):
-		# 				column_index_list.append(column_index['ingress speed'])
-		# 			if config.getboolean('Graph','report.graph.network_speed.egress') orconfig.getboolean('Graph','report.graph.network_speed.ingress'):
-		# 				axis_label_list.append(['timestamp','Network Speed (MB/s)'])
-
-		# 		column_index_list.append(column_index['cpu usage'])
-		# 		column_index_list.append(column_index['cpu load avg'])
-		# 		column_index_list.append(column_index['memory'])
-		# 		column_index_list.append(column_index['swap'])
-		# else:
-		column_index_list=[column_index['cpu usage'],column_index['cpu load avg'],column_index['memory'],column_index['swap'],column_index['total process'],column_index['running process'],column_index['zombie process'],column_index['read speed'],column_index['write speed'],column_index['egress speed'],column_index['ingress speed'],column_index['users']]
-
-		list_of_column_index_list=[[column_index['cpu usage']],[column_index['cpu load avg']],[column_index['memory'],column_index['swap']],[column_index['total process'],column_index['running process'],column_index['zombie process']],[column_index['read speed'],column_index['write speed']],[column_index['egress speed'],column_index['ingress speed']]]
-
-		axis_label_list=[['timestamp','CPU(%)'],['timestamp','Average Load'],['timestamp','Memory(%)'],['timestamp','No. of Processes'],['timestamp','Disk Operations'],['timestamp','Network Speed (MB/s)']]
+		axis_label_list=[]
+		list_of_column_index_list=[]
+		i=1
+		for section in config['Graph']:
+			temp=[]
+			flag=0
+			for sub_section in config['Graph'][section]:
+				if config['Graph'][section].as_bool(sub_section) ==True:
+					if flag == 0:
+						axis_label_list.append(section)
+						flag=1
+					temp.append(i)
+				i+=1
+			if temp:
+				list_of_column_index_list.append(temp)
+			del temp
+		print axis_label_list
 
 		main(timestamp_start,timestamp_end,column_index_list,list_of_column_index_list,axis_label_list)
 		end_time=time.time()
