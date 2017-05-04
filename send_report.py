@@ -99,7 +99,7 @@ def calculate_average(column_index_list, timestamp_start, timestamp_end): # avg 
 	count=0
 	try:
 		#read file
-		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+		with open(get_current_directory()+'/data/raw.ds') as file:
 			index=binary_search(timestamp_start,1,total_lines)
 			if index == None: #if index is not found search the entire file
 				index=1
@@ -136,7 +136,7 @@ def get_unique_users(timestamp_start, timestamp_end): #find all new users for in
 	unique_users=set([])
 	global total_lines
 	global line_offset
-	with open(get_current_directory()+'/data/'+date+'.txt') as file:
+	with open(get_current_directory()+'/data/raw.ds') as file:
 		index=binary_search(timestamp_start,1,total_lines)
 		if index == None: #if index is not found search the entire file
 			index=1
@@ -265,7 +265,7 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 
 	## read file according to column number , segregate into lists
 	try:
-		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+		with open(get_current_directory()+'/data/raw.ds') as file:
 			index=binary_search(timestamp_start,1,total_lines)
 			if index == None: #if index is not found search the entire file
 				index=1
@@ -306,7 +306,7 @@ def plot_graph(list_of_column_index_list,timestamp_start,timestamp_end,axis_labe
 		plt.grid(True)
 		plt.savefig(get_current_directory()+'/graph/'+date+'_'+ str(i+1) +'_graph.jpg')
 		log_str=""
-		for j in range(1,len(list_of_column_index_list[i])):
+		for j in range(len(list_of_column_index_list[i])):
 			log_str+=graph_label_index[list_of_column_index_list[i][j]]+', '
 		log_str=log_str.rstrip(", ")
 		logger.debug('Graph: '+log_str+' plotted against Time(secs)')
@@ -461,7 +461,7 @@ if __name__=='__main__':
 		}
 
 		#read file to store offsets for each line and count the number of lines
-		with open(get_current_directory()+'/data/'+date+'.txt') as file:
+		with open(get_current_directory()+'/data/raw.ds') as file:
 			line_offset = []
 			offset = 0
 			total_lines=0
