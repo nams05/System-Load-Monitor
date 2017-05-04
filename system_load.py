@@ -18,11 +18,6 @@ def check_directory_exists(directory):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
-def get_date():
-	now=datetime.datetime.now()
-	date=now.strftime("%d %b %Y")
-	return date
-
 ## Functions for collecting System Metrics ##
 def get_epoch_time():
 	return int(time.time())
@@ -87,7 +82,6 @@ if __name__ == '__main__':
 		check_directory_exists(get_directory()+'/data')
 		check_directory_exists(get_directory()+'/graph')
 		## get system statistics
-		date=get_date()
 		epoch_time=get_epoch_time()
 		cpu_usage,cpu_load_avg=get_cpu_usage()
 		memory=get_memory_usage()
@@ -114,7 +108,7 @@ if __name__ == '__main__':
 		'usernames':usernames
 		}
 
-		with open(get_directory()+'/data/'+date+'.txt','a' ) as f:
+		with open(get_directory()+'/data/raw.ds','a' ) as f:
 			f.write(str(system_stats['epoch'])+" , "+str(system_stats['cpu usage'])+" , "+str(system_stats['cpu load avg'])+" , "+str(system_stats['memory'])+" , "+str(system_stats['swap'])+" , "+str(system_stats['total process'])+" , "+str(system_stats['running process'])+" , "+str(system_stats['zombie process'])+" , "+str(system_stats['read speed'])+" , "+str(system_stats['write speed'])+" , "+str(system_stats['egress speed'])+" , "+str(system_stats['ingress speed'])+" , "+str(system_stats['usernames'])+"\n")
 
 		time.sleep(1)
